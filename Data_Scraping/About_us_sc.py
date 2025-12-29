@@ -1,0 +1,97 @@
+import sys
+import os
+import time
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(PROJECT_ROOT)
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+
+from Data.About_pdf_generator import generate_about_us_pdf
+
+
+def scrape_about_section_one(driver):
+    wait = WebDriverWait(driver, 20)
+    paragraphs = wait.until(
+        EC.presence_of_all_elements_located(
+            (By.XPATH, "(//div[@class='main_info wow fadeInUp'])[1]//p")
+        )
+    )
+
+    data = []
+    for p in paragraphs:
+        text = p.text.strip()
+        if text:
+            data.append(text)
+
+    return data
+
+
+def scrape_about_section_two(driver):
+    wait = WebDriverWait(driver, 20)
+    data = []
+
+    accordion_links = wait.until(
+        EC.presence_of_all_elements_located(
+            (By.XPATH,
+             "//div[@class='about_other_data accordion_outer_box']"
+             "//h4[@class='panel-title']/a")
+        )
+    )
+
+    for link in accordion_links:
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", link)
+        time.sleep(0.5)
+        driver.execute_script("arguments[0].click();", link)
+
+        collapse_id = link.get_attribute("href").split("#")[-1]
+
+        panel_body = wait.until(
+            EC.visibility_of_element_located(
+                (By.XPATH,
+                 f"//div[@id='{collapse_id}']//div[@class='panel-body']")
+            )
+        )
+
+        paragraphs = panel_body.find_elements(
+            By.XPATH, ".//div[@class='list_style']//p"
+        )
+
+        for p in paragraphs:
+            text = p.text.strip()
+            if text and text != "\xa0":
+                data.append(text)
+
+    return data
+
+
+def main():
+    chrome_options = Options()
+    chrome_options.add_argument("--start-maximized")
+
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()),
+        options=chrome_options
+    )
+
+    try:
+        driver.get("https://www.sunbeaminfo.com/about-us")
+
+        section_1 = scrape_about_section_one(driver)
+        section_2 = scrape_about_section_two(driver)
+
+        pdf_path = generate_about_us_pdf(section_1, section_2)
+        print(pdf_path)
+
+    finally:
+        driver.quit()
+
+
+if __name__ == "__main__":
+    main()
