@@ -248,7 +248,6 @@ with st.sidebar:
         new_chat()
         st.rerun()
     
-<<<<<<< HEAD
     if st.session_state.chat_history:
         for idx, session in enumerate(st.session_state.chat_history):
             col1, col2 = st.columns([4, 1])
@@ -309,7 +308,6 @@ if st.session_state.chat_mode == 'text':
         if st.button("⬆️ Load Previous Messages", use_container_width=True):
             load_more_messages()
             st.rerun()
-=======
     for msg in st.session_state.messages[-3:]:
         st.markdown(f'<div class="history-item">{msg["content"][:40]}...</div>', unsafe_allow_html=True)
     
@@ -347,7 +345,6 @@ if st.session_state.chat_mode == 'text':
         <div style="color: #007BFF; font-weight: 600; font-size: 10px;">+91 7768960392</div>
     </div>
     """, unsafe_allow_html=True)
->>>>>>> f1b3d4683aadae14e3716b9a12e520c8f4f28113
 
     
     if len(st.session_state.messages) == 0:
