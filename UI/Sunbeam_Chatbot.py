@@ -1,5 +1,6 @@
 import streamlit as st
 from datetime import datetime
+from RAG_Model.Agent_response import get_agent_response
 
 # Page configuration
 st.set_page_config(
@@ -207,11 +208,7 @@ def load_more_messages():
 def set_topic_question(question):
     st.session_state.current_input = question
 
-def get_rag_response(user_message):
-    """
-    Placeholder for RAG model integration
-    """
-    return f"This is a placeholder response. Integrate your RAG model here to process: '{user_message}'"
+
 
 # Sidebar
 with st.sidebar:
@@ -404,7 +401,7 @@ if user_input:
         "timestamp": datetime.now().strftime("%H:%M:%S")
     })
     
-    bot_response = get_rag_response(user_input)
+    bot_response = get_agent_response(user_input)
     
     st.session_state.messages.append({
         "role": "assistant", 
