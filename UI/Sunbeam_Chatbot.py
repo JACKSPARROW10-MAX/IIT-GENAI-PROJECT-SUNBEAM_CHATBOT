@@ -312,19 +312,6 @@ if st.session_state.chat_mode == 'text':
         st.markdown(f'<div class="history-item">{msg["content"][:40]}...</div>', unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
-    
-    # st.markdown("""
-    # <div class="sidebar-card">
-    #     <button class="btn-sidebar">↗️ Share chat</button>
-    #     <button class="btn-sidebar">🆕 New Chat</button>
-    # </div>
-    # <div class="sidebar-card">
-    #     <div class="sidebar-title">🌍 Select Language</div>
-    # """, unsafe_allow_html=True)
-    
-    # st.selectbox("", ["English", "हिंदी", "मराठी"], key="lang")
-   # Replace your language section with this EXACT code:
-
     st.markdown("""
     <div class="sidebar-card">
         <div class="sidebar-title" style="margin-bottom: 4px !important;">🌍 Select Language</div>
