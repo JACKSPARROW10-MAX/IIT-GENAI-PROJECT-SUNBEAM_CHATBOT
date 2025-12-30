@@ -10,8 +10,6 @@ from langchain_core.documents import Document
 from langchain_community.embeddings import HuggingFaceEmbeddings
 
 import chromadb
-
-# ---------------- LOAD ENV ----------------
 load_dotenv()
 
 CHROMA_API_KEY = os.getenv("CHROMA_API_KEY")
@@ -26,19 +24,16 @@ if not CHROMA_API_KEY:
 if not TENANT:
     raise RuntimeError("❌ TENANT_ID not set")
 
-# ---------------- CHROMA CLOUD CLIENT ----------------
 client = chromadb.CloudClient(
     api_key=CHROMA_API_KEY,
     tenant=TENANT,
     database=DATABASE
 )
 
-# ---------------- EMBEDDING MODEL (FIXED) ----------------
 embedding_model = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
 
-# ---------------- HELPERS ----------------
 def generate_hash(text: str) -> str:
     return hashlib.md5(text.encode("utf-8")).hexdigest()
 
@@ -47,7 +42,6 @@ def generate_chunk_id(source: str, page: int, chunk_index: int) -> str:
     return f"{source}_p{page}_c{chunk_index}"
 
 
-# ---------------- LOAD & CHUNK ----------------
 def load_and_chunk_pdfs():
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=600,
@@ -85,7 +79,6 @@ def load_and_chunk_pdfs():
     return documents, ids
 
 
-# ---------------- UPSERT ----------------
 def upsert_documents():
     print("📄 Loading and chunking PDFs...")
     documents, ids = load_and_chunk_pdfs()
@@ -104,7 +97,6 @@ def upsert_documents():
     print("✅ Upsert completed successfully")
 
 
-# ---------------- DELETE ----------------
 def delete_by_source(source_filename: str):
     print(f"🗑️ Deleting all chunks for: {source_filename}")
     collection = client.get_collection(COLLECTION_NAME)
@@ -112,9 +104,7 @@ def delete_by_source(source_filename: str):
     print("✅ Deletion completed")
 
 
-# ---------------- RUN ----------------
 if __name__ == "__main__":
     upsert_documents()
 
-    # Example:
-    # delete_by_source("old_file.pdf")
+
