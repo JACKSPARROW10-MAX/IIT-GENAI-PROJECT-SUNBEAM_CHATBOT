@@ -8,7 +8,7 @@ sys.path.append(PROJECT_ROOT)
 from Data.internship_pdf_gen import generate_internship_pdf
 
 URL = "https://www.sunbeaminfo.in/internship"
-OUTPUT_PDF = r"D:\SUNBEAM PROJECT\IIT-GENAI-PROJECT-SUNBEAM_CHATBOT\Data\internship_data.pdf"
+OUTPUT_PDF = r"D:\Sunbeam\IIT-GENAI-PROJECT-SUNBEAM_CHATBOT\Data\internship_data.pdf"
 
 
 def scrape_internship_text():
