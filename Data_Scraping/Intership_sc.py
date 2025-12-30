@@ -18,7 +18,6 @@ def scrape_internship_text():
 
     all_text = []
 
-    # ---------------- STEP 1: Scrape OUTSIDE dropdowns ----------------
     internship_section = driver.find_element(By.ID, "internship")
 
     outside_elements = internship_section.find_elements(
@@ -32,7 +31,6 @@ def scrape_internship_text():
         if text and len(text) > 2:
             all_text.append(text)
 
-    # ---------------- STEP 2: Scrape DROPDOWNS by ID ----------------
     dropdown_ids = [
         "collapseOneA",
         "collapseTwo",
@@ -46,7 +44,6 @@ def scrape_internship_text():
         try:
             dropdown = driver.find_element(By.ID, drop_id)
 
-            # Force open dropdown (Bootstrap-safe)
             driver.execute_script("""
                 arguments[0].classList.add('in');
                 arguments[0].style.height = 'auto';
@@ -71,13 +68,11 @@ def scrape_internship_text():
 
     driver.quit()
 
-    # Remove duplicates, keep order
     all_text = list(dict.fromkeys(all_text))
 
     return all_text
 
 
-# ---------------- MAIN ----------------
 if __name__ == "__main__":
     internship_text = scrape_internship_text()
     generate_internship_pdf(internship_text, OUTPUT_PDF)
