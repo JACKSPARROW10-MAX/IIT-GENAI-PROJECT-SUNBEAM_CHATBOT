@@ -1,64 +1,97 @@
 import os
 from dotenv import load_dotenv
 import chromadb
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain_groq import ChatGroq
+
+from langchain_huggingface import HuggingFaceEmbeddings, HuggingFacePipeline
+from langchain_chroma import Chroma
+
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
+
+
+
 
 load_dotenv()
 
+CHROMA_API_KEY = os.getenv("CHROMA_API_KEY")
+TENANT_ID = os.getenv("TENANT_ID")
+CHROMA_DATABASE = os.getenv("CHROMA_DATABASE")
+CHROMA_COLLECTION = os.getenv("CHROMA_COLLECTION")
 
+if not CHROMA_API_KEY:
+    raise ValueError("❌ CHROMA_API_KEY not found")
+
+# ---------------- SETUP RAG ----------------
 def setup_rag():
-    """ONLY your installed packages"""
-    # YOUR CHROMA CLOUD (exact setup)
+
     client = chromadb.CloudClient(
-        api_key=os.getenv("CHROMA_API_KEY"),
-        tenant=os.getenv("TENANT_ID"),
-        database=os.getenv("CHROMA_DATABASE")
+        api_key=CHROMA_API_KEY,
+        tenant=TENANT_ID,
+        database=CHROMA_DATABASE
     )
-    
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
+
     vectorstore = Chroma(
         client=client,
-        collection_name=os.getenv("CHROMA_COLLECTION"),
+        collection_name=CHROMA_COLLECTION,
         embedding_function=embeddings
     )
-    
-    llm = ChatGroq(model="llama3-8b-8192", api_key=os.getenv("groq_Api"), temperature=0)
-    
+
+    model_name = "google/flan-t5-base"
+
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+
+    pipe = pipeline(
+        "text2text-generation",
+        model=model,
+        tokenizer=tokenizer,
+        max_new_tokens=256,
+        temperature=0
+    )
+
+    llm = HuggingFacePipeline(pipeline=pipe)
+
     return llm, vectorstore
 
-# Initialize (uses your existing installs)
+
 llm, vectorstore = setup_rag()
 
+# ---------------- RAG RESPONSE ----------------
 def get_agent_response(user_message: str) -> str:
-    """✅ NO NEW LIBRARIES - Pure RAG"""
     try:
-        # 1. Search your PDFs
         docs = vectorstore.similarity_search(user_message, k=3)
-        context = "\n\n".join([doc.page_content for doc in docs])
-        
-        # 2. Smart prompt (your PG programs)
+
+        if not docs:
+            return "📄 Not found in documents"
+
+        context = "\n\n".join(doc.page_content for doc in docs)
+
         prompt = f"""
 You are Sunbeam AI assistant for PG programs (PGCP-AC, PGCP-DS).
 
-CONTEXT FROM YOUR PDFs:
+Answer ONLY using the context below.
+If answer is missing, say "Not found in documents".
+
+CONTEXT:
 {context}
 
-QUESTION: {user_message}
+QUESTION:
+{user_message}
 
-Answer using ONLY the PDF context above. Be concise and helpful.
-If no relevant info found, say "Not found in documents".
+ANSWER:
 """
-        
-        # 3. Groq response (your installed package)
-        response = llm.invoke(prompt)
-        
-        return f"🤖 **{response.content}**\n\n📄 *From Sunbeam PDFs*"
-        
-    except Exception as e:
-        return f"🔧 **Error:** {str(e)[:100]}\nCheck ChromaDB/Groq keys"
 
-# Test
+        response = llm.invoke(prompt)
+
+        return f"🤖 {response}\n\n📄 Source: Sunbeam PDFs"
+
+    except Exception as e:
+        return f"🔧 Error: {str(e)}"
+
+
+# ---------------- TEST ----------------
 if __name__ == "__main__":
-    print(get_agent_response("What are the courses?"))
+    print(get_agent_response("What are the courses offered?"))

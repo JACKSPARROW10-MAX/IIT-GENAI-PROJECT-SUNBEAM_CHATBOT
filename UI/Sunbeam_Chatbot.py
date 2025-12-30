@@ -1,6 +1,12 @@
 import streamlit as st
 from datetime import datetime
+import sys
+import os
+import time
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(PROJECT_ROOT)
 from RAG_Model.Agent_response import get_agent_response
+
 
 # Page configuration
 st.set_page_config(
