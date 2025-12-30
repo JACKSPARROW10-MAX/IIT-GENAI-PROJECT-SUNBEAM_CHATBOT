@@ -248,6 +248,7 @@ with st.sidebar:
         new_chat()
         st.rerun()
     
+<<<<<<< HEAD
     if st.session_state.chat_history:
         for idx, session in enumerate(st.session_state.chat_history):
             col1, col2 = st.columns([4, 1])
@@ -308,6 +309,45 @@ if st.session_state.chat_mode == 'text':
         if st.button("⬆️ Load Previous Messages", use_container_width=True):
             load_more_messages()
             st.rerun()
+=======
+    for msg in st.session_state.messages[-3:]:
+        st.markdown(f'<div class="history-item">{msg["content"][:40]}...</div>', unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    # st.markdown("""
+    # <div class="sidebar-card">
+    #     <button class="btn-sidebar">↗️ Share chat</button>
+    #     <button class="btn-sidebar">🆕 New Chat</button>
+    # </div>
+    # <div class="sidebar-card">
+    #     <div class="sidebar-title">🌍 Select Language</div>
+    # """, unsafe_allow_html=True)
+    
+    # st.selectbox("", ["English", "हिंदी", "मराठी"], key="lang")
+   # Replace your language section with this EXACT code:
+
+    st.markdown("""
+    <div class="sidebar-card">
+        <div class="sidebar-title" style="margin-bottom: 4px !important;">🌍 Select Language</div>
+    """, unsafe_allow_html=True)
+
+    st.selectbox("", ["🇮🇳 English", "🇮🇳 हिन्दी", "🇮🇳 मराठी"], key="lang")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+
+    
+    st.markdown("""
+     </div>
+    <div class="sidebar-card" style="text-align: center;">
+        <div class="sidebar-title" style="justify-content: center;">📞 Call</div>
+        <button class="call-btn">📱</button>
+        <div style="color: #007BFF; font-weight: 600; font-size: 10px;">+91 7768960392</div>
+    </div>
+    """, unsafe_allow_html=True)
+>>>>>>> f1b3d4683aadae14e3716b9a12e520c8f4f28113
 
     
     if len(st.session_state.messages) == 0:
