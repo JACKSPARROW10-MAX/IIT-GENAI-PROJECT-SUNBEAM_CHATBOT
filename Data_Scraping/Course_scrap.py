@@ -13,7 +13,6 @@ COURSE_URLS=course_link_provider()
 PDF_PATH = r"D:\Sunbeam\IIT-GENAI-PROJECT-SUNBEAM_CHATBOT\Data\Course_data.pdf"
 
 
-# ================= HELPER =================
 def dict_to_paragraph_text(data: dict) -> str:
     text = ""
     for key, value in data.items():
@@ -31,14 +30,12 @@ def dict_to_paragraph_text(data: dict) -> str:
     return text
 
 
-# ================= PDF GENERATOR =================
 def generate_pdf(course_data, pdf_path):
     doc = SimpleDocTemplate(pdf_path)
     styles = getSampleStyleSheet()
     elements = []
 
     for course in course_data:
-        # Course Title (FIXED KEY)
         elements.append(
             Paragraph(
                 f"<b>{course.get('Course Title', 'Unnamed Course')}</b>",
@@ -54,7 +51,6 @@ def generate_pdf(course_data, pdf_path):
     doc.build(elements)
 
 
-# ================= SCRAPER =================
 def scrape_course_data(URL):
     driver = webdriver.Chrome()
     wait = WebDriverWait(driver, 20)
@@ -72,7 +68,6 @@ def scrape_course_data(URL):
         }
     }
 
-    # ---------- MAIN LEFT CONTENT ----------
     main_section = wait.until(
         EC.presence_of_element_located((By.ID, "course_cat"))
     )
@@ -81,17 +76,14 @@ def scrape_course_data(URL):
         By.XPATH, ".//div[contains(@class,'col-sm-7') or contains(@class,'col-md-8')]"
     )
 
-    # ---------- COURSE TITLE ----------
     data["Course Title"] = left_col.find_element(By.TAG_NAME, "h3").text.strip()
 
-    # ---------- COURSE INFO ----------
     paragraphs = left_col.find_elements(By.XPATH, "./p")
     for p in paragraphs:
         text = p.text.strip()
         if ":" in text:
             data["Course Info"].append(text)
 
-    # ---------- ACCORDION ----------
     accordion = left_col.find_element(By.ID, "accordion")
     panels = accordion.find_elements(By.CLASS_NAME, "panel")
 
@@ -139,7 +131,6 @@ def scrape_course_data(URL):
     return data
 
 
-# ================= MAIN =================
 if __name__ == "__main__":
 
     all_courses = []
