@@ -44,8 +44,8 @@ def generate_chunk_id(source: str, page: int, chunk_index: int) -> str:
 
 def load_and_chunk_pdfs():
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=600,
-        chunk_overlap=100
+        chunk_size=1000,
+        chunk_overlap=200
     )
 
     documents: List[Document] = []

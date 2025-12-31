@@ -17,7 +17,7 @@ CHROMA_COLLECTION = os.getenv("CHROMA_COLLECTION")
 
 # Choose your FREE LLM option
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq")  # Options: "groq" or "huggingface"
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # Get free at https://console.groq.com
+GROQ_API_KEY = os.getenv("NEW_GROQ_KEY")  # Get free at https://console.groq.com
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")  # Get free at https://huggingface.co/settings/tokens
 
 if not CHROMA_API_KEY:
@@ -61,7 +61,7 @@ class GroqClient:
         }
         
         payload = {
-            "model": "llama-3.3-70b-versatile",  # Free tier model
+            "model": "llama-3.1-8b-instant",  # Free tier model
             "messages": messages,
             "temperature": 0.3,
             "max_tokens": 1024
@@ -312,7 +312,7 @@ When you need information, call the appropriate tool. Provide comprehensive answ
         
         while iteration < max_iterations:
             # Call LLM with tools (Groq supports native tool calling)
-            response = llm_client.chat(messages, tools=TOOLS if LLM_PROVIDER == "groq" else None)
+            response = llm_client.chat(messages, tools=TOOLS if LLM_PROVIDER == "groq" else LLM_PROVIDER == "huggingface" and TOOLS)
             
             if "choices" not in response:
                 return f"❌ API Error: {response}"
