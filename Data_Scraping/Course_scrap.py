@@ -6,7 +6,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 import time
 import os
-from .link import course_link_provider
+from link import course_link_provider
 
 COURSE_URLS = []
 COURSE_URLS = course_link_provider()
