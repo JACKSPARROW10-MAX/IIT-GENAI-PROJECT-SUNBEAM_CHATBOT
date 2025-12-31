@@ -1,5 +1,12 @@
 import streamlit as st
 from datetime import datetime
+import sys
+import os
+import time
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(PROJECT_ROOT)
+from RAG_Model.Agent_response import get_agent_response
+
 
 # Page configuration
 st.set_page_config(
@@ -207,11 +214,7 @@ def load_more_messages():
 def set_topic_question(question):
     st.session_state.current_input = question
 
-def get_rag_response(user_message):
-    """
-    Placeholder for RAG model integration
-    """
-    return f"This is a placeholder response. Integrate your RAG model here to process: '{user_message}'"
+
 
 # Sidebar
 with st.sidebar:
@@ -312,19 +315,6 @@ if st.session_state.chat_mode == 'text':
         st.markdown(f'<div class="history-item">{msg["content"][:40]}...</div>', unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
-    
-    # st.markdown("""
-    # <div class="sidebar-card">
-    #     <button class="btn-sidebar">↗️ Share chat</button>
-    #     <button class="btn-sidebar">🆕 New Chat</button>
-    # </div>
-    # <div class="sidebar-card">
-    #     <div class="sidebar-title">🌍 Select Language</div>
-    # """, unsafe_allow_html=True)
-    
-    # st.selectbox("", ["English", "हिंदी", "मराठी"], key="lang")
-   # Replace your language section with this EXACT code:
-
     st.markdown("""
     <div class="sidebar-card">
         <div class="sidebar-title" style="margin-bottom: 4px !important;">🌍 Select Language</div>
@@ -417,7 +407,7 @@ if user_input:
         "timestamp": datetime.now().strftime("%H:%M:%S")
     })
     
-    bot_response = get_rag_response(user_input)
+    bot_response = get_agent_response(user_input)
     
     st.session_state.messages.append({
         "role": "assistant", 
