@@ -4,13 +4,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
-import json
 import time
+import os
 from .link import course_link_provider
 
 COURSE_URLS = []
-COURSE_URLS=course_link_provider()
-PDF_PATH = r"D:\Sunbeam\IIT-GENAI-PROJECT-SUNBEAM_CHATBOT\Data\Course_data.pdf"
+COURSE_URLS = course_link_provider()
+
+PDF_PATH = r"D:\SUNBEAM PROJECT\IIT-GENAI-PROJECT-SUNBEAM_CHATBOT\Data\Course_data.pdf"
 
 
 def dict_to_paragraph_text(data: dict) -> str:
@@ -31,6 +32,7 @@ def dict_to_paragraph_text(data: dict) -> str:
 
 
 def generate_pdf(course_data, pdf_path):
+    os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
     doc = SimpleDocTemplate(pdf_path)
     styles = getSampleStyleSheet()
     elements = []
@@ -78,10 +80,17 @@ def scrape_course_data(URL):
 
     data["Course Title"] = left_col.find_element(By.TAG_NAME, "h3").text.strip()
 
-    paragraphs = left_col.find_elements(By.XPATH, "./p")
-    for p in paragraphs:
-        text = p.text.strip()
-        if ":" in text:
+    course_info_div = left_col.find_element(
+        By.CLASS_NAME, "course_info"
+    )
+
+    info_elements = course_info_div.find_elements(
+        By.XPATH, ".//h3 | .//p"
+    )
+
+    for el in info_elements:
+        text = el.text.strip()
+        if text:
             data["Course Info"].append(text)
 
     accordion = left_col.find_element(By.ID, "accordion")
@@ -91,10 +100,10 @@ def scrape_course_data(URL):
         heading = panel.find_element(By.CLASS_NAME, "panel-heading").text.strip()
         collapse = panel.find_element(By.CLASS_NAME, "panel-collapse")
 
-        driver.execute_script("""
-            arguments[0].classList.add('in');
-            arguments[0].style.height='auto';
-        """, collapse)
+        driver.execute_script(
+            "arguments[0].classList.add('in'); arguments[0].style.height='auto';",
+            collapse
+        )
 
         time.sleep(0.3)
 
@@ -114,7 +123,7 @@ def scrape_course_data(URL):
             rows = collapse.find_elements(By.XPATH, ".//table//tr")
             for row in rows[1:]:
                 cols = [c.text.strip() for c in row.find_elements(By.TAG_NAME, "td")]
-                if cols:
+                if len(cols) >= 5:
                     data["Batch Schedule"]["Table"].append({
                         "Sr.No": cols[0],
                         "Batch Code": cols[1],
