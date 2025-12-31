@@ -1,22 +1,24 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-import time, os, json
+import time
+import os
 
 from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Preformatted
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.lib.enums import TA_LEFT
+from reportlab.lib.enums import TA_LEFT, TA_CENTER
+from reportlab.lib import colors
 
 
 URL = "https://www.sunbeaminfo.in/internship"
 OUTPUT_PDF_PATH = r"D:\SUNBEAM PROJECT\IIT-GENAI-PROJECT-SUNBEAM_CHATBOT\Data\internship_final.pdf"
 
 
-# ---------------- MAIN ----------------
 options = Options()
 options.add_argument("--start-maximized")
+options.add_argument("--headless")
 
 driver = webdriver.Chrome(options=options)
 driver.get(URL)
@@ -24,10 +26,8 @@ time.sleep(5)
 
 internship = driver.find_element(By.ID, "internship")
 
-# Step 1: Collect STATIC content BEFORE dropdowns
 static_before = []
 for el in internship.find_elements(By.XPATH, ".//*[self::h2 or self::h3 or self::p or self::ul or self::table]"):
-    # Check if element is inside a panel-collapse (dropdown content)
     parents = driver.execute_script("""
         let el = arguments[0];
         let parents = [];
@@ -38,7 +38,6 @@ for el in internship.find_elements(By.XPATH, ".//*[self::h2 or self::h3 or self:
         return parents;
     """, el)
     
-    # If not inside dropdown, it's static content before dropdowns
     if not any("panel-collapse" in p for p in parents):
         tag = el.tag_name.lower()
         
@@ -62,18 +61,15 @@ for el in internship.find_elements(By.XPATH, ".//*[self::h2 or self::h3 or self:
             if rows:
                 static_before.append({"type": "table", "data": rows})
 
-# Step 2: Expand all dropdowns and collect dropdown sections
 dropdowns = []
 panel_groups = internship.find_elements(By.CLASS_NAME, "panel")
 
 for panel in panel_groups:
     try:
-        # Get dropdown title
         heading = panel.find_element(By.CLASS_NAME, "panel-heading")
         title_el = heading.find_element(By.TAG_NAME, "a")
         title = title_el.text.strip()
         
-        # Find and expand the collapse section
         collapse = panel.find_element(By.CLASS_NAME, "panel-collapse")
         driver.execute_script(
             "arguments[0].classList.add('in'); arguments[0].style.height='auto';", 
@@ -81,7 +77,6 @@ for panel in panel_groups:
         )
         time.sleep(0.5)
         
-        # Scrape content inside this dropdown
         dropdown_content = []
         
         for el in collapse.find_elements(By.XPATH, ".//*[self::h2 or self::h3 or self::p or self::ul or self::table]"):
@@ -116,12 +111,10 @@ for panel in panel_groups:
         print(f"Error processing panel: {e}")
         continue
 
-# Step 3: Collect STATIC content AFTER dropdowns
 static_after = []
 all_panels = internship.find_elements(By.CLASS_NAME, "panel")
 if all_panels:
     last_panel = all_panels[-1]
-    # Get all siblings after the last panel
     following_elements = driver.execute_script("""
         let panel = arguments[0];
         let siblings = [];
@@ -161,18 +154,6 @@ if all_panels:
 
 driver.quit()
 
-# ---------------- CREATE JSON STRUCTURE ----------------
-json_data = {
-    "source_url": URL,
-    "scraped_date": time.strftime("%Y-%m-%d %H:%M:%S"),
-    "structure": {
-        "static_before": static_before,
-        "dropdowns": dropdowns,
-        "static_after": static_after
-    }
-}
-
-# ---------------- PDF WITH JSON CONTENT ----------------
 os.makedirs(os.path.dirname(OUTPUT_PDF_PATH), exist_ok=True)
 
 doc = SimpleDocTemplate(
@@ -186,40 +167,112 @@ doc = SimpleDocTemplate(
 
 styles = getSampleStyleSheet()
 
-# Create a custom style for JSON code
-code_style = ParagraphStyle(
-    'Code',
-    parent=styles['Normal'],
-    fontName='Courier',
-    fontSize=8,
-    leading=10,
-    leftIndent=0,
-    rightIndent=0,
+title_style = ParagraphStyle(
+    'CustomTitle',
+    parent=styles['Heading1'],
+    fontSize=18,
+    textColor=colors.HexColor('#1a237e'),
+    spaceAfter=12,
+    spaceBefore=12,
     alignment=TA_LEFT,
-    spaceAfter=0,
-    spaceBefore=0
+    fontName='Helvetica-Bold'
+)
+
+section_title_style = ParagraphStyle(
+    'SectionTitle',
+    parent=styles['Heading2'],
+    fontSize=14,
+    textColor=colors.HexColor('#283593'),
+    spaceAfter=10,
+    spaceBefore=16,
+    fontName='Helvetica-Bold'
+)
+
+subtitle_style = ParagraphStyle(
+    'SubTitle',
+    parent=styles['Heading3'],
+    fontSize=12,
+    textColor=colors.HexColor('#3949ab'),
+    spaceAfter=8,
+    spaceBefore=10,
+    fontName='Helvetica-Bold'
+)
+
+text_style = ParagraphStyle(
+    'CustomBody',
+    parent=styles['BodyText'],
+    fontSize=10,
+    leading=14,
+    spaceAfter=6,
+    alignment=TA_LEFT,
+    fontName='Helvetica'
+)
+
+list_style = ParagraphStyle(
+    'ListItem',
+    parent=styles['BodyText'],
+    fontSize=10,
+    leading=14,
+    spaceAfter=4,
+    leftIndent=20,
+    bulletIndent=10,
+    fontName='Helvetica'
 )
 
 story = []
 
-# Title
-story.append(Paragraph("Internship Information - JSON Format", styles["Title"]))
+story.append(Paragraph("Sunbeam Internship Information", title_style))
 story.append(Spacer(1, 20))
 
-# Convert JSON to formatted string
-json_string = json.dumps(json_data, indent=2, ensure_ascii=False)
+def add_content_items(items, story):
+    for item in items:
+        if item["type"] == "title":
+            story.append(Paragraph(item["text"], section_title_style))
+        elif item["type"] == "subtitle":
+            story.append(Paragraph(item["text"], subtitle_style))
+        elif item["type"] == "text":
+            story.append(Paragraph(item["text"], text_style))
+        elif item["type"] == "list_item":
+            story.append(Paragraph(f"• {item['text']}", list_style))
+        elif item["type"] == "table" and item["data"]:
+            table_data = item["data"]
+            t = Table(table_data, repeatRows=1)
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3949ab')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                ('TOPPADDING', (0, 0), (-1, 0), 8),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+            ]))
+            story.append(t)
+            story.append(Spacer(1, 10))
 
-# Split JSON into lines and add to PDF
-json_lines = json_string.split('\n')
+if static_before:
+    add_content_items(static_before, story)
+    story.append(Spacer(1, 20))
 
-for line in json_lines:
-    # Use Preformatted to preserve spacing and indentation
-    story.append(Preformatted(line, code_style))
+for dropdown in dropdowns:
+    story.append(Paragraph(dropdown["title"], section_title_style))
+    story.append(Spacer(1, 6))
+    
+    add_content_items(dropdown["content"], story)
+    
+    story.append(Spacer(1, 16))
+
+if static_after:
+    add_content_items(static_after, story)
 
 doc.build(story)
 
-print(f"✅ PDF with JSON data generated: {OUTPUT_PDF_PATH}")
+print(f"✅ PDF generated: {OUTPUT_PDF_PATH}")
 print(f"\nData Structure:")
-print(f"   - Static content before dropdowns: {len(json_data['structure']['static_before'])} items")
-print(f"   - Dropdown sections: {len(json_data['structure']['dropdowns'])} sections")
-print(f"   - Static content after dropdowns: {len(json_data['structure']['static_after'])} items")
+print(f"   - Static content before dropdowns: {len(static_before)} items")
+print(f"   - Dropdown sections: {len(dropdowns)} sections")
+print(f"   - Static content after dropdowns: {len(static_after)} items")

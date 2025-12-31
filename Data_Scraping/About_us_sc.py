@@ -12,10 +12,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
-
+from selenium.webdriver.chrome.options import Options
 from Data.About_pdf_generator import generate_about_us_pdf
 
-
+Options.add_argument("--headless")
 def scrape_about_section_one(driver):
     wait = WebDriverWait(driver, 20)
     paragraphs = wait.until(

@@ -1,3 +1,9 @@
+import sys
+import os
+import time
+
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(PROJECT_ROOT)
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -6,8 +12,9 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 import time
 import os
-from .link import course_link_provider
+from Data_Scraping.link import course_link_provider
 from selenium.webdriver.chrome.options import Options
+
 
 
 COURSE_URLS = []

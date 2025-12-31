@@ -6,7 +6,7 @@ import time
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(PROJECT_ROOT)
-from RAG_Model.Agent_response import get_agent_response
+from RAG_Model.Agent_response import agent_response
 
 # Page configuration
 st.set_page_config(
@@ -142,7 +142,7 @@ col1, col2, col3 = st.columns(3)
 
 topic_questions = {
     "📚 About Us": "Tell me About Sunbeam?",
-    "💼 Internship": "Give Schedule of Internships",
+    "💼 Internship": "info of internships which has fees 4000 show in table format",
     "📖 Course": "List A Course Title and Price"
 }
 
@@ -192,7 +192,7 @@ if st.session_state.chat_mode == 'text':
             with st.spinner("Thinking..."):
                 # Add language instruction to query for LLM
                 llm_query = query + get_language_instruction(st.session_state.language)
-                bot_response = get_agent_response(llm_query)
+                bot_response =agent_response(llm_query)
                 st.write(bot_response)
         
         st.session_state.messages.append({
@@ -223,7 +223,7 @@ if st.session_state.chat_mode == 'text':
             with st.spinner("Thinking..."):
                 # Add language instruction to query for LLM
                 llm_query = user_input + get_language_instruction(st.session_state.language)
-                bot_response = get_agent_response(llm_query)
+                bot_response = agent_response(llm_query)
                 st.write(bot_response)
         
         st.session_state.messages.append({
