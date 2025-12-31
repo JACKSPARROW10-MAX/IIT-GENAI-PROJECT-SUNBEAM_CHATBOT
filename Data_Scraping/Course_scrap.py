@@ -7,6 +7,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 import time
 import os
 from .link import course_link_provider
+from selenium.webdriver.chrome.options import Options
+
 
 COURSE_URLS = []
 COURSE_URLS = course_link_provider()
@@ -54,7 +56,15 @@ def generate_pdf(course_data, pdf_path):
 
 
 def scrape_course_data(URL):
-    driver = webdriver.Chrome()
+        
+    options = Options()
+    options.add_argument("--disable-notifications")
+    options.add_argument("--disable-gcm")
+    options.add_argument("--disable-sync")
+    options.add_argument("--log-level=3")   # hides warnings/errors
+    options.add_experimental_option("excludeSwitches", ["enable-logging"])
+
+    driver = webdriver.Chrome(options)
     wait = WebDriverWait(driver, 20)
     driver.get(URL)
 

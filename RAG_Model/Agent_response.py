@@ -283,98 +283,150 @@ def parse_tool_calls(response_text: str) -> List[Dict]:
     
     return tool_calls if tool_calls else None
 
+def extract_assistant_message(response):
+    """
+    Normalize LLM responses from OpenAI / Groq / HuggingFace
+    """
+    if not isinstance(response, dict):
+        raise ValueError("Invalid LLM response format")
+
+    if "choices" in response:
+        return response["choices"][0]["message"]
+
+    if "message" in response:
+        return response["message"]
+
+    if "content" in response:
+        return {"role": "assistant", "content": response["content"]}
+
+    raise KeyError(f"Unsupported response structure: {response}")
 
 # ---------------- AGENTIC RAG RESPONSE ----------------
 def get_agent_response(user_message: str, max_iterations: int = 3) -> str:
     """
-    Agentic RAG with FREE LLM: Let AI decide which tools to use
+    Agentic RAG with FREE LLM
+    - Forces specific course recommendation
+    - Handles Groq / HuggingFace response formats
+    - No hallucination, strict Sunbeam scope
     """
     try:
         messages = [
             {
-                "role": "system",
-                "content": """You are Sunbeam AI assistant for PG programs (PGCP-AC, PGCP-DS).
+                 "role": "system",
+        "content": """
+You are Sunbeam AI Assistant.
 
-Use the available tools to search for information:
-- about_us_search: For organization info, history, vision, facilities
-- internship_search: For fees, schedules, course content, curriculum
-- course_search: For course offerings, eligibility, admissions
+Answer using ONLY the provided databases.
+Never mix data sources. Never use general knowledge.
 
-When you need information, call the appropriate tool. Provide comprehensive answers based on retrieved information."""
-            },
-            {
-                "role": "user",
-                "content": user_message
-            }
-        ]
+ROUTING:
+• Course queries → course_data (course_search)
+• Internship queries → internship_data (internship_search)
+• Pre-CAT queries → precat_data (precat_search)
+• Institute / about queries → about_data (about_us_search)
+
+Call ONLY one relevant tool.
+
+BEHAVIOR:
+• Understand user intent (info / recommend / availability / compare)
+• Recommend ONLY if explicitly asked
+• Do NOT guess or infer missing data
+• Do NOT add marketing content
+
+If data is not found, reply exactly:
+"This information is not available in the provided data."
+
+OUTPUT :
+• Information:
+  Title: <Exact DB name>
+  Details: <facts from DB>
+• Recommendation (only if asked):
+  Recommended: <Exact DB name>
+  Why: <facts from DB>
+• Availability:
+  Answer: Yes / No
+• Comparison:
+  Compare ONLY items from the same data source
+
+Source: Internal Sunbeam DATABASE
+
+Tone: factual, concise, professional.
+"""
+    },
+    {
+        "role": "user",
+        "content": user_message
+    }
+]
 
         iteration = 0
-        
+
         while iteration < max_iterations:
-            # Call LLM with tools (Groq supports native tool calling)
-            response = llm_client.chat(messages, tools=TOOLS if LLM_PROVIDER == "groq" else LLM_PROVIDER == "huggingface" and TOOLS)
-            
-            if "choices" not in response:
-                return f"❌ API Error: {response}"
-            
-            assistant_message = response["choices"][0]["message"]
-            
-            # Check for tool calls (Groq native support)
+            response = llm_client.chat(
+                messages,
+                tools=TOOLS if LLM_PROVIDER in ["groq", "huggingface"] else None
+            )
+
+            assistant_message = extract_assistant_message(response)
+
+            # ✅ Native tool calls (Groq)
             if "tool_calls" in assistant_message and assistant_message["tool_calls"]:
                 tool_call = assistant_message["tool_calls"][0]
                 tool_name = tool_call["function"]["name"]
                 tool_args = json.loads(tool_call["function"]["arguments"])
                 query = tool_args.get("query", "")
-                
-                print(f"🔧 Using tool: {tool_name} with query: {query}")
-                
-                # Execute tool
+
+                print(f"🔧 Tool used: {tool_name} | Query: {query}")
+
                 result = execute_tool(tool_name, query)
-                
-                # Add to conversation
+
                 messages.append(assistant_message)
                 messages.append({
                     "role": "tool",
                     "tool_call_id": tool_call["id"],
                     "content": result
                 })
-                
+
                 iteration += 1
-            
-            # Check for parsed tool calls (HuggingFace fallback)
-            elif "content" in assistant_message:
-                content = assistant_message["content"]
-                tool_calls = parse_tool_calls(content)
-                
-                if tool_calls:
-                    results = []
-                    for tc in tool_calls:
-                        print(f"🔧 Using tool: {tc['name']} with query: {tc['query']}")
-                        result = execute_tool(tc["name"], tc["query"])
-                        results.append(f"{tc['name']}: {result}")
-                    
-                    messages.append(assistant_message)
-                    messages.append({
-                        "role": "user",
-                        "content": f"Tool results:\n" + "\n\n".join(results) + "\n\nNow provide a final answer based on these results."
-                    })
-                    
-                    iteration += 1
-                else:
-                    # No tool calls, this is the final answer
-                    return f"🤖 {content}\n\n📄 Source: Sunbeam PDFs"
-            else:
-                break
-        
-        # Final call without tools to get answer
+                continue
+
+            # ✅ HuggingFace fallback (text-based tool calls)
+            content = assistant_message.get("content", "")
+            tool_calls = parse_tool_calls(content)
+
+            if tool_calls:
+                results = []
+                for tc in tool_calls:
+                    print(f"🔧 Tool used: {tc['name']} | Query: {tc['query']}")
+                    result = execute_tool(tc["name"], tc["query"])
+                    results.append(f"{tc['name']}: {result}")
+
+                messages.append(assistant_message)
+                messages.append({
+                    "role": "user",
+                    "content": (
+                        "Tool results:\n"
+                        + "\n\n".join(results)
+                        + "\n\nNow answer strictly using these results "
+                          "and follow the mandatory output format."
+                    )
+                })
+
+                iteration += 1
+                continue
+
+            # ✅ Final answer (no more tools)
+            return f"🤖 {content}"
+
+        # ✅ Safety final call
         final_response = llm_client.chat(messages, tools=None)
-        final_answer = final_response["choices"][0]["message"]["content"]
-        
-        return f"🤖 {final_answer}\n\n📄 Source: Sunbeam PDFs"
+        final_message = extract_assistant_message(final_response)
+        final_content = final_message.get("content", "")
+
+        return f"🤖 {final_content}"
 
     except Exception as e:
         return f"🔧 Error: {str(e)}"
-
 
 # ---------------- SIMPLE FALLBACK ----------------
 def get_simple_response(user_message: str) -> str:
@@ -399,9 +451,11 @@ def get_simple_response(user_message: str) -> str:
         ]
         
         response = llm_client.chat(messages)
-        answer = response["choices"][0]["message"]["content"]
+        assistant_message = extract_assistant_message(response)
+        answer = assistant_message.get("content", "")
+
         
-        return f"🤖 {answer}\n\n📄 Source: Sunbeam PDFs"
+        return f"🤖 {answer}"
     
     except Exception as e:
         return f"🔧 Error: {str(e)}"
