@@ -33,4 +33,9 @@ jobs:
 
       - name: Run ingestion pipeline
         run: |
-          python scripts/run_all_scrap.py
+          python scripts/About_us_sc.py
+          python scripts/Course_scrap.py
+          python scripts/Internship_sc.py
+          python scripts/PreCAT_sc.py
+          python scripts/data_to_chroma.py
+          
