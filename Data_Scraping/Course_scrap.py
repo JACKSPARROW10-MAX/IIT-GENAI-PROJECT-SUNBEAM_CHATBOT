@@ -25,20 +25,17 @@ PDF_PATH = r"../Data/Course_data.pdf"
 from selenium.common.exceptions import WebDriverException
 import time
 
-def safe_get(driver, url, retries=2):
-    for attempt in range(retries):
+import time
+
+def safe_get(driver, url, retries=3):
+    for i in range(retries):
         try:
             driver.get(url)
-            return True
-        except WebDriverException as e:
-            print(f"⚠️ Chrome crashed while loading {url}")
-            print("🔄 Restarting browser...")
-            try:
-                driver.quit()
-            except:
-                pass
-            driver = create_driver()
             time.sleep(3)
+            return True
+        except Exception as e:
+            print(f"Retry {i+1} failed for {url}: {e}")
+            time.sleep(5)
     return False
 
 
