@@ -13,7 +13,7 @@ from reportlab.lib import colors
 
 def scrape_internships():
     URL = "https://www.sunbeaminfo.in/internship"
-    OUTPUT_PDF_PATH = r"D:\SUNBEAM PROJECT\IIT-GENAI-PROJECT-SUNBEAM_CHATBOT\Data\internship_final.pdf"
+    OUTPUT_PDF_PATH = r"../Data/internship_final.pdf"
 
     options = Options()
     options.add_argument("--start-maximized")
