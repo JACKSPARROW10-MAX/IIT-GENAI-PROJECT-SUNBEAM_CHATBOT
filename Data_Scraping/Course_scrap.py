@@ -20,7 +20,7 @@ from selenium.webdriver.chrome.options import Options
 COURSE_URLS = []
 COURSE_URLS = course_link_provider()
 
-PDF_PATH = r"D:\SUNBEAM PROJECT\IIT-GENAI-PROJECT-SUNBEAM_CHATBOT\Data\Course_data.pdf"
+PDF_PATH = r"../Data/Course_data.pdf"
 
 
 def dict_to_paragraph_text(data: dict) -> str:
