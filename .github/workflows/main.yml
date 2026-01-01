@@ -48,7 +48,7 @@ jobs:
           CHROMA_TENANT: ${{ secrets.TENANT_ID }}
           CHROMA_DATABASE: ${{ secrets.CHROMA_DATABASE }}
           LLM_API_KEY: ${{ secrets.NEW_GROQ_KEY }}
-        run: echo "Environment variables loaded"
+          run: echo "Environment variables loaded"
 
       # 🔹 6. Run ingestion pipeline
       - name: Run ingestion pipeline
@@ -58,8 +58,8 @@ jobs:
           CHROMA_DATABASE: ${{ secrets.CHROMA_DATABASE }}
           LLM_API_KEY: ${{ secrets.NEW_GROQ_KEY }}
         run: |
-          python scripts/About_us_sc.py
-          python scripts/Course_scrap.py
-          python scripts/Internship_sc.py
-          python scripts/PreCAT_sc.py
-          python scripts/data_to_chroma.py
+          python Data_Scraping/About_us_sc.py
+          python Data_Scraping/Course_scrap.py
+          python Data_Scraping/Internship_sc.py
+          python Data_Scraping/PreCAT_sc.py
+          python Chroma_DB/data_to_chroma.py
