@@ -10,12 +10,13 @@ from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_LEFT
 from reportlab.lib import colors
 from Data_Scraping.driver_factory import create_driver
+
 import sys
 import os
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, PROJECT_ROOT)
-
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 def scrape_internships(driver):
     URL = "https://www.sunbeaminfo.in/internship"
