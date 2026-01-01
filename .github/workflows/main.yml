@@ -26,9 +26,9 @@ jobs:
       - name: Set environment variables
         env:
           CHROMA_API_KEY: ${{ secrets.CHROMA_API_KEY }}
-          CHROMA_TENANT: ${{ secrets.CHROMA_TENANT }}
+          CHROMA_TENANT: ${{ secrets.TENANT_ID }}
           CHROMA_DATABASE: ${{ secrets.CHROMA_DATABASE }}
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_API_KEY: ${{ secrets.NEW_GROQ_KEY }}
         run: echo "Environment variables loaded"
 
       - name: Run ingestion pipeline
