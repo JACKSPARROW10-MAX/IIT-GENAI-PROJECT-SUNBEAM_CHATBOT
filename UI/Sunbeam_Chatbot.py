@@ -131,6 +131,8 @@ with st.sidebar:
             st.caption(f"🕒 {session['timestamp']}")
     else:
         st.info("No history yet")
+    # --- ADD THIS IN SIDEBAR (e.g. under Settings or History) ---
+
 
 # Main content
 st.title("🤖 Sunbeam Bot")
