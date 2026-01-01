@@ -163,22 +163,24 @@ def scrape_course_data(driver, url):
                 if "Weekdays" in text or "Schedule" in text:
                     data["Batch Schedule"]["Schedule Note"] = text
 
-    driver.quit()
-    return data
 
+    return data
 
 if __name__ == "__main__":
 
     all_courses = []
     driver = create_driver()
-    for url in COURSE_URLS:
-        print(f"Scraping: {url}")
-        course = scrape_course_data(driver, url)
-        all_courses.append(course)
-        import time
-        time.sleep(2)
 
+    try:
+        for url in COURSE_URLS:
+            print(f"Scraping: {url}")
+            course = scrape_course_data(driver, url)
+            if course:
+                all_courses.append(course)
+            time.sleep(2)
+
+    finally:
+        driver.quit()   # ✅ quit once
 
     generate_pdf(all_courses, PDF_PATH)
-
     print("✅ PDF created with multiple courses")
