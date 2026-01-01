@@ -14,7 +14,7 @@ def scrape_precat_course():
 
     # ------------------- CONFIG -------------------
     URL = "https://sunbeaminfo.in/pre-cat"
-    PDF_NAME = r"D:\SUNBEAM PROJECT\IIT-GENAI-PROJECT-SUNBEAM_CHATBOT\Data\PreCAT_Course_Data.pdf"
+    PDF_NAME = r"../Data/PreCAT_Course_Data.pdf"
 
     # ------------------- SELENIUM SETUP -------------------
     options = webdriver.ChromeOptions()
