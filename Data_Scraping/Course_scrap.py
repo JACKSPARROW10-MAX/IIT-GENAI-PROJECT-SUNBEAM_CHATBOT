@@ -22,6 +22,25 @@ COURSE_URLS = course_link_provider()
 
 PDF_PATH = r"../Data/Course_data.pdf"
 
+from selenium.common.exceptions import WebDriverException
+import time
+
+def safe_get(driver, url, retries=2):
+    for attempt in range(retries):
+        try:
+            driver.get(url)
+            return True
+        except WebDriverException as e:
+            print(f"⚠️ Chrome crashed while loading {url}")
+            print("🔄 Restarting browser...")
+            try:
+                driver.quit()
+            except:
+                pass
+            driver = create_driver()
+            time.sleep(3)
+    return False
+
 
 def dict_to_paragraph_text(data: dict) -> str:
     text = ""
@@ -64,7 +83,10 @@ def generate_pdf(course_data, pdf_path):
 
 def scrape_course_data(driver, url):
     wait = WebDriverWait(driver, 20)
-    driver.get(url)
+    if not safe_get(driver, url):
+        print(f" Skipping URL after retries: {url}")
+        return None
+
 
     data = {
         "Course Title": "",
@@ -156,6 +178,9 @@ if __name__ == "__main__":
         print(f"Scraping: {url}")
         course = scrape_course_data(driver, url)
         all_courses.append(course)
+        import time
+        time.sleep(2)
+
 
     generate_pdf(all_courses, PDF_PATH)
 
