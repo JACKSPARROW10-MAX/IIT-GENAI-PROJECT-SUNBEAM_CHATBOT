@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 🔹 1. Free disk space (VERY IMPORTANT)
+      # 🔹 1. Free disk space
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet
@@ -35,22 +35,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
 
-      # 🔹 5. Verify secrets (safe check)
+      # 🔹 5. Verify secrets (SAFE)
       - name: Verify secrets
+        env:
+          CHROMA_API_KEY: ${{ secrets.CHROMA_API_KEY }}
+          LLM_API_KEY: ${{ secrets.NEW_GROQ_KEY }}
         run: |
           python - <<EOF
           import os
-          print("CHROMA_API_KEY:", bool(os.getenv("CHROMA_API_KEY")))
-          print("LLM_API_KEY:", bool(os.getenv("LLM_API_KEY")))
+          print("CHROMA_API_KEY loaded:", bool(os.getenv("CHROMA_API_KEY")))
+          print("LLM_API_KEY loaded:", bool(os.getenv("LLM_API_KEY")))
           EOF
-        env:
-          CHROMA_API_KEY: ${{ secrets.CHROMA_API_KEY }}
-          CHROMA_TENANT: ${{ secrets.TENANT_ID }}
-          CHROMA_DATABASE: ${{ secrets.CHROMA_DATABASE }}
-          LLM_API_KEY: ${{ secrets.NEW_GROQ_KEY }}
-          run: echo "Environment variables loaded"
 
-      # 🔹 6. Run ingestion pipeline
+      # 🔹 6. Run ingestion pipeline (CORRECT PATHS)
       - name: Run ingestion pipeline
         env:
           CHROMA_API_KEY: ${{ secrets.CHROMA_API_KEY }}
