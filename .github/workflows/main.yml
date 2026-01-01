@@ -52,6 +52,10 @@ jobs:
           print("CHROMA_API_KEY loaded:", bool(os.getenv("CHROMA_API_KEY")))
           print("LLM_API_KEY loaded:", bool(os.getenv("LLM_API_KEY")))
           EOF
+      - name: Debug file structure
+        run: |
+          ls
+          ls Data_Scraping
 
       # 🔹 6. Run ingestion pipeline (CORRECT PATHS)
       - name: Run ingestion pipeline
@@ -63,6 +67,6 @@ jobs:
         run: |
           python Data_Scraping/About_us_sc.py
           python Data_Scraping/Course_scrap.py
-          python Data_Scraping/Internship_sc.py
+          python Data_Scraping/Intership_sc.py
           python Data_Scraping/PreCAT_sc.py
           python Chroma_DB/data_to_chroma.py
