@@ -20,7 +20,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 # PDF GENERATION
 # --------------------------------------------------
 def generate_about_us_pdf(section_1, section_2):
-    output_path = r"..\Data\about_us_data.pdf"
+    output_path = r"../Data/about_us_data.pdf"
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     pdf = canvas.Canvas(output_path, pagesize=A4)
