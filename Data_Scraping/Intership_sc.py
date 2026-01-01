@@ -9,17 +9,12 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_LEFT
 from reportlab.lib import colors
+from Data_Scraping.driver_factory import create_driver
 
 
-def scrape_internships():
+def scrape_internships(driver):
     URL = "https://www.sunbeaminfo.in/internship"
     OUTPUT_PDF_PATH = r"../Data/internship_final.pdf"
-
-    options = Options()
-    options.add_argument("--start-maximized")
-    options.add_argument("--headless")
-
-    driver = webdriver.Chrome(options=options)
     driver.get(URL)
     time.sleep(5)
 
@@ -265,8 +260,8 @@ def scrape_internships():
 
 if __name__ == "__main__":
     print(" Testing Internship Scraper...")
-
-    result = scrape_internships()
+    driver= create_driver()
+    result = scrape_internships(driver)
 
     print("Scraping completed")
     print(f"PDF Path: {result['pdf_path']}")

@@ -14,7 +14,7 @@ import time
 import os
 from Data_Scraping.link import course_link_provider
 from selenium.webdriver.chrome.options import Options
-
+from Data_Scraping.driver_factory import create_driver
 
 
 COURSE_URLS = []
@@ -62,18 +62,9 @@ def generate_pdf(course_data, pdf_path):
     doc.build(elements)
 
 
-def scrape_course_data(URL):
-        
-    options = Options()
-    options.add_argument("--disable-notifications")
-    options.add_argument("--disable-gcm")
-    options.add_argument("--disable-sync")
-    options.add_argument("--log-level=3")   # hides warnings/errors
-    options.add_experimental_option("excludeSwitches", ["enable-logging"])
-
-    driver = webdriver.Chrome(options)
+def scrape_course_data(driver, url):
     wait = WebDriverWait(driver, 20)
-    driver.get(URL)
+    driver.get(url)
 
     data = {
         "Course Title": "",
@@ -160,10 +151,10 @@ def scrape_course_data(URL):
 if __name__ == "__main__":
 
     all_courses = []
-
+    driver = create_driver()
     for url in COURSE_URLS:
         print(f"Scraping: {url}")
-        course = scrape_course_data(url)
+        course = scrape_course_data(driver, url)
         all_courses.append(course)
 
     generate_pdf(all_courses, PDF_PATH)

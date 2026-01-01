@@ -8,25 +8,13 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import A4
 import json
-
-def scrape_precat_course():
+from Data_Scraping.driver_factory import create_driver
+def scrape_precat_course(driver):
 
 
     # ------------------- CONFIG -------------------
     URL = "https://sunbeaminfo.in/pre-cat"
     PDF_NAME = r"../Data/PreCAT_Course_Data.pdf"
-
-    # ------------------- SELENIUM SETUP -------------------
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    options.add_argument("--disable-notifications")
-    options.add_argument("--disable-gpu")
-
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
-        options=options
-    )
-
     wait = WebDriverWait(driver, 40)
     driver.get(URL)
 
@@ -163,4 +151,5 @@ def test_scrape_precat_course():
 
 
 if __name__ == "__main__":
+    driver= create_driver()
     test_scrape_precat_course()

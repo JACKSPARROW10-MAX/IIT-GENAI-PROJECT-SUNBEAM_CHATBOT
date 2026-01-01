@@ -1,6 +1,5 @@
-import sys
 import os
-import time
+import sys
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(PROJECT_ROOT)
@@ -8,36 +7,47 @@ sys.path.append(PROJECT_ROOT)
 
 def run_full_scraper():
     """
-    Re-scrapes all data sources and rebuilds the vector database
+    Re-scrapes all data sources and rebuilds the Chroma vector database.
     """
 
-    from Data_Scraping.Course_scrap import scrape_courses
-    from Data_Scraping.Intership_sc import scrape_internships
-    from Data_Scraping.About_us_sc import main
-    from Data_Scraping.PreCAT_sc import scrape_precat_course
+    from Data_Scraping.driver_factory import create_driver
+
+    from Data_Scraping.About_us_sc import scrape_about
+    from Data_Scraping.Course_scrap import scrape_all_courses
+    from Data_Scraping.Intership_sc import scrape_all_internships
+    from Data_Scraping.PreCAT_sc import scrape_precat_courses
 
     from Loaders.MyLoader import MyLoader
     from Chroma_DB.data_to_chroma import rebuild_chroma_db
 
-    print("🔄 Starting full data re-scraping...")
+    print("🔄 Starting full data re-scraping pipeline...")
 
-    # 1. Run all scrapers
-    course_data = scrape_courses()
-    internship_data = scrape_internships()
-    about_data = main()
-    pre_cat_data = scrape_precat_course()
+    driver = create_driver()
 
-    # 2. Combine all scraped data
+    try:
+        about_data = scrape_about(driver)
+        course_data = scrape_all_courses(driver)
+        internship_data = scrape_all_internships(driver)
+        precat_data = scrape_precat_courses(driver)
+
+    finally:
+        driver.quit()
+
     all_documents = []
+    all_documents.extend(about_data)
     all_documents.extend(course_data)
     all_documents.extend(internship_data)
-    all_documents.extend(about_data)
-    all_documents.extend(pre_cat_data)
+    all_documents.extend(precat_data)
 
-    # 3. Load documents using custom loader
+    print(f"📄 Total documents collected: {len(all_documents)}")
+
     loader = MyLoader(all_documents)
     docs = loader.lazyload()
 
-    # 4. Rebuild ChromaDB (delete + reinsert embeddings)
-    rebuild_chroma_db()
-    print("✅ Full data re-scraping and DB update completed")
+    rebuild_chroma_db(docs)
+
+    print("✅ Full data re-scraping and Chroma DB update completed")
+
+
+if __name__ == "__main__":
+    run_full_scraper()
