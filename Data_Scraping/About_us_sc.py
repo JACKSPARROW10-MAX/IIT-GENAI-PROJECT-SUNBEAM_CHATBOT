@@ -13,7 +13,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+from Data_Scraping.driver_factory import create_driver
 
 
 # --------------------------------------------------
@@ -118,15 +118,7 @@ def scrape_about_section_two(driver):
 # MAIN
 # --------------------------------------------------
 def main():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=1920,1080")
-
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
-        options=chrome_options
-    )
+    driver = create_driver()
 
     try:
         driver.get("https://www.sunbeaminfo.com/about-us")

@@ -20,7 +20,8 @@ DATABASE = os.getenv("CHROMA_DATABASE")
 SCRAPPED_DATA_COLLECTION = "Scrapped_Data"  # For text chunks
 EMBEDDINGS_COLLECTION = "Embeddings"        # For embeddings only
 
-PDF_DIR = r"D:\SUNBEAM PROJECT\IIT-GENAI-PROJECT-SUNBEAM_CHATBOT\Data"
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+PDF_DIR = os.path.join(PROJECT_ROOT, "Data")
 
 if not CHROMA_API_KEY:
     raise RuntimeError("❌ CHROMA_API_KEY not set")

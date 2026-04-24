@@ -18,7 +18,6 @@ from Data_Scraping.driver_factory import create_driver
 
 
 COURSE_URLS = []
-COURSE_URLS = course_link_provider()
 
 PDF_PATH = r"../Data/Course_data.pdf"
 
@@ -169,6 +168,10 @@ def scrape_course_data(driver, url):
 if __name__ == "__main__":
 
     all_courses = []
+    
+    # Move link provider call here
+    COURSE_URLS = course_link_provider()
+    
     driver = create_driver()
 
     try:

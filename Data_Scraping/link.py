@@ -1,25 +1,15 @@
+import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException
+from Data_Scraping.driver_factory import create_driver
 
 
 
 def get_driver():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless=new")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--window-size=1920,1080")
-    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36")
-    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    chrome_options.add_experimental_option("useAutomationExtension", False)
-
-    return webdriver.Chrome(options=chrome_options)
+    return create_driver()
 
 
 def course_link_provider():
@@ -31,17 +21,26 @@ def course_link_provider():
     wait = WebDriverWait(driver, 60)
 
     try:
-        # First wait for the root element to ensure the SPA has started loading
-        wait.until(EC.presence_of_element_located((By.ID, "root")))
+        # Wait for the body tag to exist
+        wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
         
-        # Then wait for the specific course links
+        # Give JS extra time to render the dynamic content
+        time.sleep(10)
+        
+        # Scroll to bottom to trigger any lazy loading
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(2)
+
+        # Wait for the specific course links
         wait.until(
             EC.presence_of_all_elements_located(
                 (By.CSS_SELECTOR, "a.c_cat_more_btn")
             )
         )
     except TimeoutException:
-        print("TimeoutException occurred. Current URL:", driver.current_url)
+        print("TimeoutException occurred.")
+        print("Current URL:", driver.current_url)
+        print("Page Title:", driver.title)
         print("Page source snippet (first 5000 chars):")
         print(driver.page_source[:5000])
         raise
