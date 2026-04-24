@@ -17,7 +17,7 @@ from Data_Scraping.driver_factory import create_driver
 
 def scrape_precat_course(driver):
     URL = "https://sunbeaminfo.in/pre-cat"
-    PDF_NAME = "../Data/PreCAT_Course_Data.pdf"
+    PDF_NAME = os.path.join(PROJECT_ROOT, "Data", "PreCAT_Course_Data.pdf")
 
     os.makedirs(os.path.dirname(PDF_NAME), exist_ok=True)
 

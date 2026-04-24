@@ -19,7 +19,7 @@ from Data_Scraping.driver_factory import create_driver
 
 COURSE_URLS = []
 
-PDF_PATH = r"../Data/Course_data.pdf"
+PDF_PATH = os.path.join(PROJECT_ROOT, "Data", "Course_data.pdf")
 
 from selenium.common.exceptions import WebDriverException
 import time

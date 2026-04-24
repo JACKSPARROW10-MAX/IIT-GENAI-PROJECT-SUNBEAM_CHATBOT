@@ -20,7 +20,7 @@ if PROJECT_ROOT not in sys.path:
 
 def scrape_internships(driver):
     URL = "https://www.sunbeaminfo.in/internship"
-    OUTPUT_PDF_PATH = r"../Data/internship_final.pdf"
+    OUTPUT_PDF_PATH = os.path.join(PROJECT_ROOT, "Data", "internship_final.pdf")
     driver.get(URL)
     time.sleep(5)
 

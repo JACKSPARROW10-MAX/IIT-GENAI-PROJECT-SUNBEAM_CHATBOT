@@ -15,12 +15,13 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from Data_Scraping.driver_factory import create_driver
 
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # --------------------------------------------------
 # PDF GENERATION
 # --------------------------------------------------
 def generate_about_us_pdf(section_1, section_2):
-    output_path = r"../Data/about_us_data.pdf"
+    output_path = os.path.join(PROJECT_ROOT, "Data", "about_us_data.pdf")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     pdf = canvas.Canvas(output_path, pagesize=A4)
