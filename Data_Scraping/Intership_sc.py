@@ -15,7 +15,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_LEFT
 from reportlab.lib import colors
-from Data_Scraping.driver_factory import create_driver
+from driver_factory import create_driver
 
 def scrape_internships(driver):
     URL = "https://www.sunbeaminfo.in/internship"

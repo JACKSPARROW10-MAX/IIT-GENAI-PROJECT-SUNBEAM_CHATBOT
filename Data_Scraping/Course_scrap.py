@@ -12,9 +12,9 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 import time
 import os
-from Data_Scraping.link import course_link_provider
+from link import course_link_provider
 from selenium.webdriver.chrome.options import Options
-from Data_Scraping.driver_factory import create_driver
+from driver_factory import create_driver
 
 
 COURSE_URLS = []
