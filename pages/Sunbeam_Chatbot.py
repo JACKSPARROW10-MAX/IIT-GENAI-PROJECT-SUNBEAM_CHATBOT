@@ -7,6 +7,12 @@ import time
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(PROJECT_ROOT)
 from RAG_Model.Agent_response import agent_response
+import streamlit as st
+
+if "logged_in" not in st.session_state or not st.session_state.logged_in:
+    st.switch_page("main.py")
+    st.stop()
+
 
 # Page configuration
 st.set_page_config(
