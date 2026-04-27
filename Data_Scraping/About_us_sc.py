@@ -17,7 +17,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from .driver_factory import create_driver
+from driver_factory import create_driver
 
 # --------------------------------------------------
 # PDF GENERATION

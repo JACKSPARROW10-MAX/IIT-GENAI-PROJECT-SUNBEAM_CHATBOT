@@ -12,7 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import A4
-from .driver_factory import create_driver
+from driver_factory import create_driver
 
 
 def scrape_precat_course(driver):
@@ -101,6 +101,11 @@ def scrape_precat_course(driver):
         "batch_count": len(batch_schedule),
         "pdf_path": PDF_NAME
     }
+
+
+def scrape_precat_courses(driver):
+    """Wrapper function for scraping precat courses"""
+    return scrape_precat_course(driver)
 
 
 if __name__ == "__main__":

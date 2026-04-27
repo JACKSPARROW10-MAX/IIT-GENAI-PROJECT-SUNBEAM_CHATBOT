@@ -12,9 +12,9 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 import time
 import os
-from .link import course_link_provider
+from link import course_link_provider
 from selenium.webdriver.chrome.options import Options
-from .driver_factory import create_driver
+from driver_factory import create_driver
 
 
 COURSE_URLS = []
@@ -165,8 +165,8 @@ def scrape_course_data(driver, url):
 
     return data
 
-if __name__ == "__main__":
-
+def scrape_all_courses():
+    """Scrape all courses and generate PDF"""
     all_courses = []
     
     # Move link provider call here
@@ -187,3 +187,12 @@ if __name__ == "__main__":
 
     generate_pdf(all_courses, PDF_PATH)
     print("✅ PDF created with multiple courses")
+    return PDF_PATH
+
+
+def main():
+    scrape_all_courses()
+
+
+if __name__ == "__main__":
+    main()

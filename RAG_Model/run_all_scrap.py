@@ -10,12 +10,12 @@ def run_full_scraper():
     Re-scrapes all data sources and rebuilds the Chroma vector database.
     """
 
-    from Data_Scraping.driver_factory import create_driver
+    from Data_Scraping import driver_factory
 
-    from Data_Scraping.About_us_sc import main as scrape_about
-    from Data_Scraping.Course_scrap import main as scrape_courses
-    from Data_Scraping.Intership_sc import scrape_internships
-    from Data_Scraping.PreCAT_sc import scrape_precat_course
+    from Data_Scraping.About_us_sc import scrape_about
+    from Data_Scraping.Course_scrap import scrape_all_courses
+    from Data_Scraping.Intership_sc import scrape_all_internships
+    from Data_Scraping.PreCAT_sc import scrape_precat_courses
 
     from Chroma_DB.data_to_chroma import upsert_documents
 
@@ -26,16 +26,16 @@ def run_full_scraper():
     scrape_about()
     
     print("📄 Scraping Course data...")
-    scrape_courses()
+    scrape_all_courses()
     
     # Run scrapers that need a shared driver
-    driver = create_driver()
+    driver = driver_factory.create_driver()
     try:
         print("📄 Scraping Internship data...")
-        scrape_internships(driver)
+        scrape_all_internships(driver)
         
         print("📄 Scraping PreCAT data...")
-        scrape_precat_course(driver)
+        scrape_precat_courses(driver)
     finally:
         driver.quit()
 
