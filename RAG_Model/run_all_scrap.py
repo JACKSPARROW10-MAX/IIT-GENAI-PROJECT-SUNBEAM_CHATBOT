@@ -12,39 +12,36 @@ def run_full_scraper():
 
     from Data_Scraping.driver_factory import create_driver
 
-    from Data_Scraping.About_us_sc import scrape_about
-    from Data_Scraping.Course_scrap import scrape_all_courses
-    from Data_Scraping.Intership_sc import scrape_all_internships
-    from Data_Scraping.PreCAT_sc import scrape_precat_courses
+    from Data_Scraping.About_us_sc import main as scrape_about
+    from Data_Scraping.Course_scrap import main as scrape_courses
+    from Data_Scraping.Intership_sc import scrape_internships
+    from Data_Scraping.PreCAT_sc import scrape_precat_course
 
-    from Loaders.MyLoader import MyLoader
-    from Chroma_DB.data_to_chroma import rebuild_chroma_db
+    from Chroma_DB.data_to_chroma import upsert_documents
 
     print("🔄 Starting full data re-scraping pipeline...")
 
+    # Run scrapers that create their own drivers
+    print("📄 Scraping About Us data...")
+    scrape_about()
+    
+    print("📄 Scraping Course data...")
+    scrape_courses()
+    
+    # Run scrapers that need a shared driver
     driver = create_driver()
-
     try:
-        about_data = scrape_about(driver)
-        course_data = scrape_all_courses(driver)
-        internship_data = scrape_all_internships(driver)
-        precat_data = scrape_precat_courses(driver)
-
+        print("📄 Scraping Internship data...")
+        scrape_internships(driver)
+        
+        print("📄 Scraping PreCAT data...")
+        scrape_precat_course(driver)
     finally:
         driver.quit()
 
-    all_documents = []
-    all_documents.extend(about_data)
-    all_documents.extend(course_data)
-    all_documents.extend(internship_data)
-    all_documents.extend(precat_data)
-
-    print(f"📄 Total documents collected: {len(all_documents)}")
-
-    loader = MyLoader(all_documents)
-    docs = loader.lazyload()
-
-    rebuild_chroma_db(docs)
+    # Upload all PDFs to Chroma
+    print("📤 Uploading data to Chroma...")
+    upsert_documents()
 
     print("✅ Full data re-scraping and Chroma DB update completed")
 

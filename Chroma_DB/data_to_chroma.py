@@ -69,6 +69,19 @@ def clear_collection(collection_name: str):
         print(f"⚠️  Error during collection clearing: {e}")
 
 
+def get_category_from_filename(filename: str) -> str:
+    """Determine category based on PDF filename"""
+    filename_lower = filename.lower()
+    if "about" in filename_lower:
+        return "about_us"
+    elif "internship" in filename_lower:
+        return "internship"
+    elif "course" in filename_lower or "precat" in filename_lower:
+        return "course"
+    else:
+        return "general"
+
+
 def load_and_chunk_pdfs():
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=3000,
@@ -89,6 +102,9 @@ def load_and_chunk_pdfs():
     for file in pdf_files:
         print(f"📄 Processing: {file}")
         
+        category = get_category_from_filename(file)
+        print(f"   Category: {category}")
+        
         try:
             loader = PyPDFLoader(os.path.join(PDF_DIR, file))
             pages = loader.load()
@@ -105,6 +121,7 @@ def load_and_chunk_pdfs():
                                 "page": page_no,
                                 "chunk_index": idx,
                                 "hash": generate_hash(chunk),
+                                "category": category,
                             }
                         )
                     )
@@ -174,6 +191,7 @@ def upsert_documents():
                     "source": doc.metadata["source"],
                     "page": doc.metadata["page"],
                     "chunk_id": doc_id,  # Reference to original chunk
+                    "category": doc.metadata["category"],
                 }
             )
         )

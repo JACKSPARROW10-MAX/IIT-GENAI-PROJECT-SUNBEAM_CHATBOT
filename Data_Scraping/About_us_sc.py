@@ -17,7 +17,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from driver_factory import create_driver
+from .driver_factory import create_driver
 
 # --------------------------------------------------
 # PDF GENERATION
@@ -120,7 +120,8 @@ def scrape_about_section_two(driver):
 # --------------------------------------------------
 # MAIN
 # --------------------------------------------------
-def main():
+def scrape_about():
+    """Main function to scrape about us data"""
     driver = create_driver()
 
     try:
@@ -131,9 +132,14 @@ def main():
 
         pdf_path = generate_about_us_pdf(section_1, section_2)
         print("PDF generated at:", pdf_path)
+        return pdf_path
 
     finally:
         driver.quit()
+
+
+def main():
+    scrape_about()
 
 
 if __name__ == "__main__":

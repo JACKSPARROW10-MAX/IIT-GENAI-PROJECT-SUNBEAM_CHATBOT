@@ -15,7 +15,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_LEFT
 from reportlab.lib import colors
-from driver_factory import create_driver
+from .driver_factory import create_driver
 
 def scrape_internships(driver):
     URL = "https://www.sunbeaminfo.in/internship"
@@ -147,8 +147,6 @@ def scrape_internships(driver):
                         static_after.append({"type": "table", "data": rows})
             except:
                 continue
-
-    driver.quit()
 
     os.makedirs(os.path.dirname(OUTPUT_PDF_PATH), exist_ok=True)
 

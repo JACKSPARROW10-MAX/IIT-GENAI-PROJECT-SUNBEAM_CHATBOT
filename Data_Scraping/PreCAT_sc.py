@@ -12,7 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import A4
-from driver_factory import create_driver
+from .driver_factory import create_driver
 
 
 def scrape_precat_course(driver):
