@@ -23,16 +23,18 @@ EMBEDDINGS_COLLECTION = "Embeddings"        # For embeddings only
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PDF_DIR = os.path.join(PROJECT_ROOT, "Data")
 
-if not CHROMA_API_KEY:
-    raise RuntimeError("❌ CHROMA_API_KEY not set")
-if not TENANT:
-    raise RuntimeError("❌ TENANT_ID not set")
-
-client = chromadb.CloudClient(
-    api_key=CHROMA_API_KEY,
-    tenant=TENANT,
-    database=DATABASE
-)
+if not CHROMA_API_KEY or CHROMA_API_KEY == "your_chroma_api_key_here":
+    print("⚠️  WARNING: CHROMA_API_KEY not found, using local ChromaDB")
+    print("   Data will be stored in: chroma_db_local")
+    client = chromadb.PersistentClient(path=os.path.join(os.getcwd(), "chroma_db_local"))
+else:
+    if not TENANT:
+        raise RuntimeError("❌ TENANT_ID not set")
+    client = chromadb.CloudClient(
+        api_key=CHROMA_API_KEY,
+        tenant=TENANT,
+        database=DATABASE
+    )
 
 embedding_model = HuggingFaceEmbeddings(
     model_name="sentence-transformers/all-MiniLM-L6-v2"

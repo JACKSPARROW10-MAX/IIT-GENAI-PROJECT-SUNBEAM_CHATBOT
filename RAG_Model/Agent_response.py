@@ -16,18 +16,30 @@ CHROMA_DATABASE = os.getenv("CHROMA_DATABASE")
 GROQ_API_KEY = os.getenv("NEW_GROQ_KEY")
 
 if not CHROMA_API_KEY:
-    raise ValueError("CHROMA_API_KEY not found in environment")
+    print("⚠️  WARNING: CHROMA_API_KEY not found in environment")
+    print("   Please add CHROMA_API_KEY to your .env file")
 if not GROQ_API_KEY:
-    raise ValueError("NEW_GROQ_KEY not found in environment")
+    print("⚠️  WARNING: NEW_GROQ_KEY not found in environment")
+    print("   Please add NEW_GROQ_KEY to your .env file")
+    print("   Get your API key from: https://console.groq.com/")
 
 
 class ChromaVectorStore:
     def __init__(self, collection_name: str):
-        self.client = chromadb.CloudClient(
-            api_key=CHROMA_API_KEY,
-            tenant=TENANT_ID,
-            database=CHROMA_DATABASE
-        )
+        try:
+            if not CHROMA_API_KEY or CHROMA_API_KEY == "your_chroma_api_key_here":
+                print("⚠️  WARNING: Using local ChromaDB instead of Cloud (no API key provided)")
+                self.client = chromadb.PersistentClient(path=os.path.join(os.getcwd(), "chroma_db_local"))
+            else:
+                self.client = chromadb.CloudClient(
+                    api_key=CHROMA_API_KEY,
+                    tenant=TENANT_ID,
+                    database=CHROMA_DATABASE
+                )
+        except Exception as e:
+            print(f"⚠️  WARNING: Failed to connect to Chroma Cloud, using local: {str(e)}")
+            self.client = chromadb.PersistentClient(path=os.path.join(os.getcwd(), "chroma_db_local"))
+        
         self.embeddings = HuggingFaceEmbeddings(
             model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
@@ -56,13 +68,16 @@ class GroqClient:
         self.base_url = "https://api.groq.com/openai/v1/chat/completions"
     
     def chat(self, messages: List[Dict[str, str]], max_tokens: int = 1024, temperature: float = 0.3) -> str:
+        if not self.api_key or self.api_key == "your_groq_api_key_here":
+            return "⚠️ API Key Error: Please add a valid Groq API key to your .env file. Get your key from https://console.groq.com/"
+        
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
         
         payload = {
-            "model": "openai/gpt-oss-120b",
+            "model": "llama-3.3-70b-versatile",
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens
@@ -73,6 +88,12 @@ class GroqClient:
             response.raise_for_status()
             result = response.json()
             return result["choices"][0]["message"]["content"]
+        except requests.exceptions.HTTPError as e:
+            if response.status_code == 401:
+                return "⚠️ API Key Error: Your Groq API key is invalid or expired. Please check your .env file."
+            else:
+                print(f"[ERROR] Groq API call failed: {str(e)}")
+                return f"I encountered an error processing your request (HTTP {response.status_code})."
         except Exception as e:
             print(f"[ERROR] Groq API call failed: {str(e)}")
             return "I encountered an error processing your request."
@@ -137,6 +158,11 @@ def aboutus_tool(query: str) -> str:
         return "The available About Us information does not contain this detail."
     
     context = "\n\n".join(all_docs)
+    
+    # Check if API key is valid before calling LLM
+    if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
+        # Fallback: return raw context
+        return f"📄 **Retrieved Information (No LLM - API Key Missing)**\n\n{context[:2000]}...\n\n⚠️ To get AI-generated answers, please add a valid Groq API key to your .env file. Get your key from: https://console.groq.com/"
     
     messages = [
         {
