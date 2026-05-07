@@ -119,7 +119,7 @@ def scrape_precat_course(driver):
 
     except Exception as e:
         logger.error(f"Fatal error scraping Pre-CAT: {str(e)}")
-        raise
+        return None
 
 def scrape_precat_courses(driver):
     """Wrapper function for Pre-CAT scraping."""
