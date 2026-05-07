@@ -43,12 +43,12 @@ jobs:
       - name: Verify secrets
         env:
           CHROMA_API_KEY: ${{ secrets.CHROMA_API_KEY }}
-          LLM_API_KEY: ${{ secrets.NEW_GROQ_KEY }}
+          NEW_GROQ_KEY: ${{ secrets.NEW_GROQ_KEY }}
         run: |
           python - <<EOF
           import os
           print("CHROMA_API_KEY loaded:", bool(os.getenv("CHROMA_API_KEY")))
-          print("LLM_API_KEY loaded:", bool(os.getenv("LLM_API_KEY")))
+          print("NEW_GROQ_KEY loaded:", bool(os.getenv("NEW_GROQ_KEY")))
           EOF
       - name: Debug file structure
         run: |
@@ -59,9 +59,9 @@ jobs:
       - name: Run ingestion pipeline
         env:
           CHROMA_API_KEY: ${{ secrets.CHROMA_API_KEY }}
-          CHROMA_TENANT: ${{ secrets.TENANT_ID }}
+          TENANT_ID: ${{ secrets.TENANT_ID }}
           CHROMA_DATABASE: ${{ secrets.CHROMA_DATABASE }}
-          LLM_API_KEY: ${{ secrets.NEW_GROQ_KEY }}
+          NEW_GROQ_KEY: ${{ secrets.NEW_GROQ_KEY }}
         run: |
           python Data_Scraping/About_us_sc.py
           python Data_Scraping/Course_scrap.py

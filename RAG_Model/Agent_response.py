@@ -187,6 +187,60 @@ QUESTION:
 {query}
 
 ANSWER:"""
+        }
+    ]
+    
+    return llm_client.chat(messages)
+
+
+def courses_tool(query: str) -> str:
+    print(f"[TOOL] courses_tool | Query: {query}")
+    
+    docs_scrapped = scrapped_data_store.search(query, filter_metadata={"category": "course"}, k=3)
+    docs_embeddings = embeddings_store.search(query, filter_metadata={"category": "course"}, k=3)
+    
+    if not docs_scrapped and not docs_embeddings:
+        docs_scrapped = scrapped_data_store.search(f"sunbeam courses modular Pre-CAT {query}", k=3)
+        docs_embeddings = embeddings_store.search(f"sunbeam courses modular Pre-CAT {query}", k=3)
+    
+    all_docs = docs_scrapped + docs_embeddings
+    
+    if not all_docs:
+        return "The courses information does not contain details about this query."
+    
+    context = "\n\n".join(all_docs)
+    
+    # Check if API key is valid before calling LLM
+    if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
+        # Fallback: return raw context
+        return f"📄 **Retrieved Information (No LLM - API Key Missing)**\n\n{context[:2000]}...\n\n⚠️ To get AI-generated answers, please add a valid Groq API key to your .env file. Get your key from: https://console.groq.com/"
+    
+    messages = [
+        {
+            "role": "system",
+            "content": """You are the Sunbeam Institute AI assistant.
+
+Answer questions using ONLY the provided course context.
+
+RULES:
+- Answer strictly from the context about courses (modular, Pre-CAT, PGCP)
+- Focus on: curriculum, syllabus, eligibility, fees, duration, structure
+- Be concise and factual
+- If the context doesn't contain the answer, say: "The courses information does not contain details about this query."
+- Do not discuss internships or general organization info here"""
+        },
+        {
+            "role": "user",
+            "content": f"""CONTEXT:
+{context}
+
+QUESTION:
+{query}
+
+ANSWER:"""
+        }
+    ]
+    
     return llm_client.chat(messages)
 
 
