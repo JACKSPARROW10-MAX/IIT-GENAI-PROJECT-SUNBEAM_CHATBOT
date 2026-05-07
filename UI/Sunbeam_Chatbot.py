@@ -86,7 +86,7 @@ def get_language_prompt(lang):
 
 # --- Sidebar ---
 with st.sidebar:
-    st.image(os.path.join(os.path.dirname(__file__), "chatbot_img.jpg"), use_container_width=True)
+    st.image(os.path.join(os.path.dirname(__file__), "chatbot_img.jpg"), width='stretch')
     st.title("Settings")
     
     st.session_state.user_name = st.text_input("Profile Name", value=st.session_state.user_name)
@@ -94,7 +94,7 @@ with st.sidebar:
     
     st.divider()
     
-    if st.button("🗑️ Clear Current Chat", use_container_width=True):
+    if st.button("🗑️ Clear Current Chat", width='stretch'):
         clear_chat()
         st.rerun()
         
@@ -103,7 +103,7 @@ with st.sidebar:
         st.caption("No history yet.")
     else:
         for i, hist in enumerate(reversed(st.session_state.chat_history)):
-            if st.button(f"📜 {hist['preview']}", key=f"hist_{i}", use_container_width=True):
+            if st.button(f"📜 {hist['preview']}", key=f"hist_{i}", width='stretch'):
                 st.session_state.messages = hist['msgs']
                 st.rerun()
 
@@ -121,7 +121,7 @@ topics = [
 ]
 
 for col, (label, query) in zip(cols, topics):
-    if col.button(label, use_container_width=True):
+    if col.button(label, width='stretch'):
         st.session_state.messages.append({"role": "user", "content": query})
         # Trigger response generation logic below
 
