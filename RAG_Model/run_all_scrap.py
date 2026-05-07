@@ -1,50 +1,52 @@
 import os
 import sys
+import logging
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.append(PROJECT_ROOT)
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def run_full_scraper():
     """
     Re-scrapes all data sources and rebuilds the Chroma vector database.
     """
-
     from Data_Scraping import driver_factory
-
     from Data_Scraping.About_us_sc import scrape_about
     from Data_Scraping.Course_scrap import scrape_all_courses
     from Data_Scraping.Intership_sc import scrape_all_internships
     from Data_Scraping.PreCAT_sc import scrape_precat_courses
-
     from Chroma_DB.data_to_chroma import upsert_documents
 
-    print("🔄 Starting full data re-scraping pipeline...")
+    logger.info("🔄 Starting full data re-scraping pipeline...")
 
-    # Run scrapers that create their own drivers
-    print("📄 Scraping About Us data...")
+    # 1. Scrape About Us
+    logger.info("📄 Scraping About Us data...")
     scrape_about()
     
-    print("📄 Scraping Course data...")
+    # 2. Scrape Courses
+    logger.info("📄 Scraping Course data...")
     scrape_all_courses()
     
-    # Run scrapers that need a shared driver
+    # 3. Scrape Internship and PreCAT (using shared driver)
     driver = driver_factory.create_driver()
     try:
-        print("📄 Scraping Internship data...")
+        logger.info("📄 Scraping Internship data...")
         scrape_all_internships(driver)
         
-        print("📄 Scraping PreCAT data...")
+        logger.info("📄 Scraping PreCAT data...")
         scrape_precat_courses(driver)
     finally:
         driver.quit()
 
-    # Upload all PDFs to Chroma
-    print("📤 Uploading data to Chroma...")
+    # 4. Ingest into Chroma
+    logger.info("📤 Uploading scraped PDFs to ChromaDB...")
     upsert_documents()
 
-    print("✅ Full data re-scraping and Chroma DB update completed")
-
+    logger.info("✅ Full data re-scraping and Chroma DB update completed successfully.")
 
 if __name__ == "__main__":
     run_full_scraper()
