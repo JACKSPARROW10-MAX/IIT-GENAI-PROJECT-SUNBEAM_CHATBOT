@@ -1,93 +1,82 @@
-from langchain_community.document_loaders.base import BaseLoader
+import logging
+from typing import Iterator, List, Dict, Any, Union
+from langchain_core.document_loaders.base import BaseLoader
 from langchain_core.documents import Document
-from typing import Iterator, Callable, Union, Any
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-class MyLoader(BaseLoader):
+class SunbeamDataLoader(BaseLoader):
     """
-    Custom Loader for Sunbeam Website Scraped Data
-
-    Converts scraped Python data (dict / list)
-    into LangChain Document objects.
+    Specialized loader for Sunbeam Institute scraped data.
+    Handles nested dictionaries and lists commonly returned by scrapers.
     """
 
-    def __init__(self, scraper_func: Callable[[], Union[dict, list]], source_name: str):
+    def __init__(self, data: Union[Dict[str, Any], List[Dict[str, Any]]], source: str = "Scraped Data"):
         """
-        :param scraper_func: function with NO arguments (use lambda if needed)
-        :param source_name: source identifier (PDF path or page name)
+        :param data: The scraped data (either a single dict or a list of dicts).
+        :param source: A label for the source (e.g., 'About Us' or 'Course Page').
         """
-        self.scraper_func = scraper_func
-        self.source_name = source_name
+        self.data = data
+        self.source = source
 
     def lazy_load(self) -> Iterator[Document]:
-        """
-        Required by LangChain BaseLoader
-        Yields Document objects
-        """
-        scraped_data = self.scraper_func()
+        """Convert the input data into LangChain Document objects."""
+        if isinstance(self.data, list):
+            for idx, item in enumerate(self.data):
+                yield self._process_item(item, f"{self.source} - Item {idx+1}")
+        elif isinstance(self.data, dict):
+            yield self._process_item(self.data, self.source)
+        else:
+            logger.error(f"Invalid data format passed to SunbeamDataLoader: {type(self.data)}")
 
-        # Case 1: (Courses, Internships)
-        if isinstance(scraped_data, list):
-            for item in scraped_data:
-                yield Document(
-                    page_content=self._dict_to_text(item),
-                    metadata={
-                        "source": self.source_name,
-                        "title": (
-                            item.get("Course Title")
-                            or item.get("Title")
-                            or "Sunbeam Course"
-                        )
-                    }
-                )
+    def _process_item(self, item: Dict[str, Any], source_label: str) -> Document:
+        """Helper to convert a dictionary item into a Document."""
+        # Extract title if available
+        title = (
+            item.get("Course Title") 
+            or item.get("title") 
+            or item.get("Title") 
+            or source_label
+        )
+        
+        # Flatten dictionary to text
+        content = self._flatten_dict_to_text(item)
+        
+        return Document(
+            page_content=content,
+            metadata={
+                "source": source_label,
+                "title": title,
+                "type": "scraped_content"
+            }
+        )
 
-        # Case 2:(About Us, Pre-CAT)
-        elif isinstance(scraped_data, dict):
-            yield Document(
-                page_content=self._dict_to_text(scraped_data),
-                metadata={
-                    "source": self.source_name,
-                    "title": "Sunbeam Info"
-                }
-            )
-
-    
-    def _dict_to_text(self, data: dict) -> str:
-        """
-        Converts nested dict/list data into LLM-readable text
-        """
+    def _flatten_dict_to_text(self, data: Dict[str, Any], indent: int = 0) -> str:
+        """Recursively converts nested dictionaries and lists to a readable string."""
         lines = []
-
+        prefix = "  " * indent
+        
         for key, value in data.items():
-            if isinstance(value, list):
-                lines.append(f"{key}:")
-                for item in value:
-                    lines.append(f"- {item}")
-
-            elif isinstance(value, dict):
-                lines.append(f"{key}:")
-                for k, v in value.items():
-                    lines.append(f"- {k}: {v}")
-
+            if not value:
+                continue
+                
+            if isinstance(value, dict):
+                lines.append(f"{prefix}### {key}:")
+                lines.append(self._flatten_dict_to_text(value, indent + 1))
+            elif isinstance(value, list):
+                lines.append(f"{prefix}**{key}**:")
+                for sub_item in value:
+                    if isinstance(sub_item, dict):
+                        lines.append(self._flatten_dict_to_text(sub_item, indent + 1))
+                    else:
+                        lines.append(f"{prefix}  • {sub_item}")
             else:
-                lines.append(f"{key}: {value}")
-
+                lines.append(f"{prefix}**{key}**: {value}")
+                
         return "\n".join(lines)
 
-
-
-if __name__ == "__main__":
-    from Data_Scraping.Course_scrap import scrape_course_data
-
-    course_urls = "https://sunbeaminfo.in/modular-courses/data-structure-algorithms-using-java"
-
-    # FIXED: Use lambda to create a no-arg function
-    course_loader = MyLoader(
-        scraper_func=lambda: scrape_course_data(course_urls),
-        source_name=r"D:\Sunbeam\IIT-GENAI-PROJECT-SUNBEAM_CHATBOT\Data\Course_data.pdf"
-    )
-
-    docs = list(course_loader.lazy_load())  # Convert to list to iterate
-    for document in docs:
-        print(document)
-        print("-" * 50)
+    def load(self) -> List[Document]:
+        """Eagerly load all documents."""
+        return list(self.lazy_load())

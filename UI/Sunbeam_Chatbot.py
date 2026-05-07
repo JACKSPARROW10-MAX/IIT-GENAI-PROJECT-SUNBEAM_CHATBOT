@@ -4,248 +4,159 @@ import sys
 import os
 import time
 
+# Ensure Project Root is in path for imports
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.append(PROJECT_ROOT)
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
+
 from RAG_Model.Agent_response import agent_response
 
-# Page configuration
+# --- Page Configuration ---
 st.set_page_config(
-    page_title="Sunbeam Bot",
+    page_title="Sunbeam AI Assistant",
     page_icon="🤖",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Initialize session state
+# --- Custom CSS for Premium Look ---
+st.markdown("""
+    <style>
+    .main {
+        background-color: #f8f9fa;
+    }
+    .stChatFloatingInputContainer {
+        padding-bottom: 20px;
+    }
+    .stChatMessage {
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .stChatMessage[data-testid="stChatMessageUser"] {
+        background-color: #e3f2fd;
+    }
+    .stChatMessage[data-testid="stChatMessageAssistant"] {
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+    }
+    .sidebar .sidebar-content {
+        background-color: #1a237e;
+        color: white;
+    }
+    h1 {
+        color: #1a237e;
+        font-weight: 700;
+    }
+    .stButton>button {
+        border-radius: 8px;
+        transition: all 0.3s;
+    }
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- Session State Initialization ---
 if 'messages' not in st.session_state:
     st.session_state.messages = []
-
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
-
-if 'chat_mode' not in st.session_state:
-    st.session_state.chat_mode = 'text'
-
 if 'language' not in st.session_state:
     st.session_state.language = 'English'
+if 'user_name' not in st.session_state:
+    st.session_state.user_name = 'Guest'
 
-if 'profile_name' not in st.session_state:
-    st.session_state.profile_name = 'User'
-
-if 'current_session_id' not in st.session_state:
-    st.session_state.current_session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-if 'process_query' not in st.session_state:
-    st.session_state.process_query = None
-
-# Functions
-def save_to_history():
-    """Save current chat session to history"""
+# --- Helper Functions ---
+def clear_chat():
     if st.session_state.messages:
-        session_data = {
-            'id': st.session_state.current_session_id,
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'messages': st.session_state.messages.copy(),
-            'preview': st.session_state.messages[0]['content'][:50] + "..." if st.session_state.messages else "Empty chat"
-        }
-        if not any(h['id'] == session_data['id'] for h in st.session_state.chat_history):
-            st.session_state.chat_history.insert(0, session_data)
-
-def load_from_history(session_id):
-    """Load a chat session from history"""
-    for session in st.session_state.chat_history:
-        if session['id'] == session_id:
-            st.session_state.messages = session['messages'].copy()
-            st.session_state.current_session_id = session_id
-            break
-
-def new_chat():
-    """Start a new chat session"""
-    save_to_history()
+        # Save to history before clearing
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        preview = st.session_state.messages[0]['content'][:40] + "..."
+        st.session_state.chat_history.append({"time": timestamp, "preview": preview, "msgs": st.session_state.messages.copy()})
     st.session_state.messages = []
-    st.session_state.current_session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-def process_topic_query(query):
-    """Process a topic query"""
-    st.session_state.process_query = query
+def get_language_prompt(lang):
+    if lang == "Hindi": return "\n\nPlease provide the response in Hindi."
+    if lang == "Marathi": return "\n\nPlease provide the response in Marathi."
+    return ""
 
-def get_language_instruction(language):
-    """Get language instruction for the query"""
-    if language == "Hindi":
-        return " Answer in Hindi language."
-    elif language == "Marathi":
-        return " Answer in Marathi language."
-    else:
-        return ""
-
-# Sidebar
+# --- Sidebar ---
 with st.sidebar:
-    st.markdown("### ⚙️ Settings")
+    st.image(os.path.join(os.path.dirname(__file__), "chatbot_img.jpg"), use_container_width=True)
+    st.title("Settings")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        st.session_state.language = st.selectbox(
-            "🌍 Language",
-            ["English", "Hindi", "Marathi"],
-            index=0
-        )
-    with col2:
-        st.session_state.profile_name = st.text_input("👤 Name", value=st.session_state.profile_name, max_chars=15)
+    st.session_state.user_name = st.text_input("Profile Name", value=st.session_state.user_name)
+    st.session_state.language = st.selectbox("Preferred Language", ["English", "Hindi", "Marathi"])
     
     st.divider()
     
-    st.markdown("### 💬 Chat Mode")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("💬 Text", use_container_width=True, type="primary" if st.session_state.chat_mode == 'text' else "secondary"):
-            st.session_state.chat_mode = 'text'
-            st.rerun()
-    with col2:
-        if st.button("🎤 Voice", use_container_width=True, type="primary" if st.session_state.chat_mode == 'voice' else "secondary"):
-            st.session_state.chat_mode = 'voice'
-            st.rerun()
-    
-    st.divider()
-    
-    st.markdown("### 📜 History")
-    
-    if st.button("➕ New Chat", use_container_width=True, type="primary"):
-        new_chat()
+    if st.button("🗑️ Clear Current Chat", use_container_width=True):
+        clear_chat()
         st.rerun()
-    
-    if st.session_state.chat_history:
-        for idx, session in enumerate(st.session_state.chat_history):
-            col1, col2 = st.columns([4, 1])
-            with col1:
-                if st.button(
-                    f"{session['preview'][:20]}...",
-                    key=f"hist_{idx}",
-                    use_container_width=True
-                ):
-                    load_from_history(session['id'])
-                    st.rerun()
-            with col2:
-                if st.button("🗑️", key=f"del_{idx}", use_container_width=True):
-                    st.session_state.chat_history.pop(idx)
-                    st.rerun()
-            st.caption(f"🕒 {session['timestamp']}")
+        
+    st.subheader("Previous Chats")
+    if not st.session_state.chat_history:
+        st.caption("No history yet.")
     else:
-        st.info("No history yet")
-    # --- ADD THIS IN SIDEBAR (e.g. under Settings or History) ---
+        for i, hist in enumerate(reversed(st.session_state.chat_history)):
+            if st.button(f"📜 {hist['preview']}", key=f"hist_{i}", use_container_width=True):
+                st.session_state.messages = hist['msgs']
+                st.rerun()
 
+# --- Main UI ---
+st.title("🤖 Sunbeam AI Assistant")
+st.caption(f"Welcome back, **{st.session_state.user_name}**! How can I help you today?")
 
-# Main content
-st.title("🤖 Sunbeam Bot")
+# Quick Action Chips
+cols = st.columns(4)
+topics = [
+    ("🏢 About Sunbeam", "Tell me about Sunbeam Institute?"),
+    ("🎓 Courses", "What modular courses are available?"),
+    ("💼 Internships", "Tell me about internship fees and batches"),
+    ("📍 Location", "Where is Sunbeam Institute located?")
+]
 
-# Topics section
-st.markdown("### Quick Topics")
+for col, (label, query) in zip(cols, topics):
+    if col.button(label, use_container_width=True):
+        st.session_state.messages.append({"role": "user", "content": query})
+        # Trigger response generation logic below
 
-col1, col2, col3 = st.columns(3)
+# Display Chat Messages
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-topic_questions = {
-    "📚 About Us": "Tell me About Sunbeam?",
-    "💼 Internship": "info of internships which has fees 4000 show in table format",
-    "📖 Course": "List A Course Title and Price"
-}
-
-topics = list(topic_questions.keys())
-
-with col1:
-    if st.button(topics[0], key="topic_0", use_container_width=True):
-        process_topic_query(topic_questions[topics[0]])
-
-with col2:
-    if st.button(topics[1], key="topic_1", use_container_width=True):
-        process_topic_query(topic_questions[topics[1]])
-
-with col3:
-    if st.button(topics[2], key="topic_2", use_container_width=True):
-        process_topic_query(topic_questions[topics[2]])
-
-st.divider()
-
-# Chat interface
-if st.session_state.chat_mode == 'text':
-    # Display messages
-    if len(st.session_state.messages) == 0:
-        st.info("👋 Hello! I'm Sunbeam Bot. How can I assist you today? Choose a topic above or type your question below.")
-    else:
-        for message in st.session_state.messages:
-            with st.chat_message(message["role"]):
-                st.write(message["content"])
+# Chat Input & Logic
+if prompt := st.chat_input("Type your question here..."):
+    # Add user message
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
     
-    # Process topic query if set
-    if st.session_state.process_query:
-        query = st.session_state.process_query
-        st.session_state.process_query = None
-        
-        # Add user message (without language instruction)
-        st.session_state.messages.append({
-            "role": "user", 
-            "content": query,
-            "timestamp": datetime.now().strftime("%H:%M:%S")
-        })
-        
-        with st.chat_message("user"):
-            st.write(query)
-        
-        # Get bot response with language instruction
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                # Add language instruction to query for LLM
-                llm_query = query + get_language_instruction(st.session_state.language)
-                bot_response =agent_response(llm_query)
-                st.write(bot_response)
-        
-        st.session_state.messages.append({
-            "role": "assistant", 
-            "content": bot_response,
-            "timestamp": datetime.now().strftime("%H:%M:%S")
-        })
-        
-        save_to_history()
-        st.rerun()
-    
-    # Chat input
-    user_input = st.chat_input("Type your message here...")
-    
-    if user_input:
-        # Add user message (without language instruction)
-        st.session_state.messages.append({
-            "role": "user", 
-            "content": user_input,
-            "timestamp": datetime.now().strftime("%H:%M:%S")
-        })
-        
-        with st.chat_message("user"):
-            st.write(user_input)
-        
-        # Get bot response with language instruction
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                # Add language instruction to query for LLM
-                llm_query = user_input + get_language_instruction(st.session_state.language)
-                bot_response = agent_response(llm_query)
-                st.write(bot_response)
-        
-        st.session_state.messages.append({
-            "role": "assistant", 
-            "content": bot_response,
-            "timestamp": datetime.now().strftime("%H:%M:%S")
-        })
-        
-        save_to_history()
-        st.rerun()
+    # Generate Assistant Response
+    with st.chat_message("assistant"):
+        with st.spinner("Searching Sunbeam knowledge base..."):
+            # Construct final query with language preference
+            full_query = prompt + get_language_prompt(st.session_state.language)
+            
+            # Call the RAG Agent
+            response = agent_response(full_query)
+            
+            # Simulate streaming for premium feel
+            placeholder = st.empty()
+            full_response = ""
+            for chunk in response.split(' '):
+                full_response += chunk + ' '
+                time.sleep(0.02)
+                placeholder.markdown(full_response + "▌")
+            placeholder.markdown(full_response)
+            
+    # Save assistant message
+    st.session_state.messages.append({"role": "assistant", "content": response})
 
-else:  # Voice mode
-    st.markdown("### 🎤 Voice Chat Mode")
-    st.info("Voice recording feature coming soon!")
-    
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col1:
-        st.button("✏️ Notes", use_container_width=True)
-    with col2:
-        if st.button("🎤 Record", use_container_width=True, type="primary"):
-            st.info("Voice recording integration point")
-    with col3:
-        st.button("📄 Transcript", use_container_width=True)
+# Bottom spacer
+st.markdown("<div style='margin-bottom: 100px;'></div>", unsafe_allow_html=True)
